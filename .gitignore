@@ -1,0 +1,8 @@
+# ignore ALL files in ANY directory named:
+venv/
+temp/
+.vscode/
+__pycache__
+
+# ignore ALL .log files
+*.log

@@ -1,0 +1,3 @@
+# ignored folders and files for dockerfile copy
+/venv
+.vscode/
