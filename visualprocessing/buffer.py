@@ -1,3 +1,4 @@
+import sys
 
 class FrameObject():
     '''
@@ -6,17 +7,15 @@ class FrameObject():
     def __init__(self, frameid, frame):
         self.frame_id = frameid
         self.frame = frame
-        self.processed_frame = None
-        self.object_ids = []
-        self.object_bboxes = {}
+        self.box_ids = []
+        self.bboxes_with_ids = {}
 
-    
-    def add_processedframe(self, processed_frame):
-        self.processed_frame = processed_frame
 
-    def add_object(self, objectid, objectbbox):
-        self.object_ids.append(objectid)
-        self.object_bboxes[objectid] = objectbbox
+    def add_bboxes_with_ids(self, bbox_and_ids):
+        for box_id in bbox_and_ids:
+            x, y, w, h, id = box_id
+            self.box_ids.append(id)
+            self.bboxes_with_ids[id] = [x,y,w,h]
 
     def get_frame_id(self):
         return self.frame_id
@@ -24,26 +23,30 @@ class FrameObject():
     def get_frame(self):
         return self.frame
 
-    def get_processed_frame(self):
-        return self.processed_frame
+    def get_box_ids(self):
+        return self.box_ids
 
-    def get_object_ids(self):
-        return self.object_ids
-
-    def get_bbox(self, objectid):
-        return self.object_bboxes[objectid]
+    def get_bbox(self, box_id):
+        return self.bboxes_with_ids[box_id]
 
 
 
 class FrameBuffer():
     def __init__(self):
+        self.current_frame_id = 0
         self.frame_ids = []
         self.frame_instances = []
 
 
     def add_frame(self, frameid, frame):
+        if frameid in self.frame_ids:
+            sys.exit('Image with same ID already in buffer')
+        self.current_frame_id = frameid
         self.frame_ids.append(frameid)
         self.frame_instances.append(FrameObject(frameid, frame))
+
+    def add_bboxes_with_ids(self, frameid, boxes_with_ids):
+        self.get_frameInstance(frameid).add_bboxes_with_ids(boxes_with_ids)
 
     def get_frameids(self):
         return self.frame_ids
