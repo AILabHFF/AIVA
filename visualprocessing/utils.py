@@ -1,5 +1,5 @@
 import cv2
-import numpy
+import numpy as np
 
 
 def scale_img(original_img, scale_percent=100):
@@ -72,3 +72,8 @@ def noise_reduction(original_img):
 
     dst = cv2.fastNlMeansDenoisingColored(original_img, None, 10, 10, 7, 15) 
     return dst
+
+
+def scale_coordinates(bboxids, scale):
+    return [int(np.round(i*scale, 0)) for i in bboxids[:-1]] + [bboxids[-1]]
+

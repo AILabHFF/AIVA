@@ -2,11 +2,12 @@ from visualprocessing.utils import *
 import numpy as np
 
 class ObjectDetector():
-    def __init__(self, method='diff'):
+    def __init__(self, method='diff', minobjectsize=10):
         self.last_greyblur_frame = []
         #self.background_subtracktor = cv2.createBackgroundSubtractorMOG2(history=50, varThreshold=40)
         self.background_subtractor = cv2.createBackgroundSubtractorKNN(history=50)
         self.method = method
+        self.minobjectsize = minobjectsize  # min object size is scaled with image size (with widht 720 min size is minobjectsize)
 
     def get_greyblur_frame(self, original_img):
         # Grayscale
@@ -40,6 +41,11 @@ class ObjectDetector():
         '''
         frame = currentframe
 
+        #set min size for object depending on image size
+        width, height, _ = frame.shape
+        minobjectsize = self.minobjectsize * width/720
+
+
         # 2. Prepare image; grayscale and blur
         current_greyblurframe = self.get_greyblur_frame(frame)
 
@@ -61,7 +67,7 @@ class ObjectDetector():
         detections = []
         for contour in contours:
             area = cv2.contourArea(contour)
-            if area > 10:
+            if area > minobjectsize:
                 x, y, w, h = cv2.boundingRect(contour)
                 detections.append([x,y,w,h])
 

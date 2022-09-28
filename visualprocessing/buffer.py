@@ -1,4 +1,6 @@
-import sys
+import sys, os
+import cv2
+from visualprocessing.utils import *
 
 class FrameObject():
     '''
@@ -32,7 +34,8 @@ class FrameObject():
 
 
 class FrameBuffer():
-    def __init__(self):
+    def __init__(self, file_path):
+        self.file_path = file_path
         self.current_frame_id = 0
         self.frame_ids = []
         self.frame_instances = []
@@ -69,44 +72,95 @@ class FrameBuffer():
 
     def add_object(self, frameid, objectid, objectbbox):
         self.get_FrameInstance(frameid).add_object(objectid, objectbbox)
+        
 
 
 
-    # More complex returns
-    def get_frameInstanceFromObjectID(self, objectid):
-        frames = []
-        for frameid in self.frame_ids:
-            finst = self.get_frameInstance(frameid)
-            if objectid in finst.get_object_ids():
-                frames.append(finst.get_frame(frameid))
-        return frames
-
-    def remove_from_start_excluding_frameid(self, frameid):
-        i = self.frame_ids.index(frameid)
-        self.frame_ids = self.frame_list[i:]
-        self.frame_instances = self.id_list[i:]
+    def update(self, n_buffer=2):
+        removed_boxids = []
 
 
-    #TODO check below vvv
+        keep_in_buffer = self.frame_ids[-n_buffer:]
+        dont_keep = self.frame_ids[:-n_buffer]
 
-    def update(self, current_frameid, active_objects, n_buffer=10):
-        if len(self.get_frameids())<n_buffer:
-            n_buffer = len(self.get_frameids())
-            
-        for fid in self.frame_ids.copy():
-            if fid < current_frameid-n_buffer:
-                self.remove_frame(fid)
+        # active boxids that are in at least one frame that remains in buffer
+        active_ids_in_buffer = set()
+        for fid in keep_in_buffer:
+            active_ids_in_buffer.update(self.get_frameInstance(fid).get_box_ids())
+
+        # clean frameids from frames with in buffer active boxids
+        for fid in dont_keep.copy():
+            if any(x in self.get_frameInstance(fid).get_box_ids() for x in active_ids_in_buffer):
+                dont_keep.remove(fid)
+
+        # get final boxids to remove
+        for fid in dont_keep:
+            frame_boxids = self.get_frameInstance(fid).get_box_ids()
+            if len(frame_boxids)>0:
+                removed_boxids += frame_boxids
+
+        # write images for removed frames
+        for boxid in set(removed_boxids):
+            self.save_as_png(boxid)
+        
+        # Finally remove all frames without active objects and not in buffer
+        for fid in dont_keep:
+            self.remove_frame(fid)
 
 
 
-    def remove_object(self, objectid):
-        pass
+
 
     def remove_frame(self, frameid):
         self.del_frameInstance(frameid)
         self.frame_ids.remove(frameid)
 
-
     def clear_all(self):
         self.frame_ids = []
         self.frame_instances = []
+
+
+    def get_frames_for_id(self, objectid):
+        frames = []
+        fids = []
+        bboxes = []
+        for frameid in self.frame_ids:
+            finst = self.get_frameInstance(frameid)
+            if objectid in finst.get_box_ids():
+                frames.append(self.get_frame(frameid))
+                fids.append(frameid)
+                bboxes.append(finst.get_bbox(objectid))
+        return frames, fids, bboxes
+
+
+    def save_as_png(self, objectid):
+        file_name = os.path.basename(os.path.realpath(self.file_path))
+        img_path = './data/saved/'
+        dir = img_path+file_name + '/' + str(objectid) + '/'
+        if not os.path.isdir(dir):
+            os.makedirs(dir)
+            print("Directory '%s' created" %dir)
+
+        #save full frame sequence
+        if not os.path.isdir(dir+'full_frames'):
+            os.makedirs(dir+'full_frames/')
+
+        frames, frameids, bboxes = self.get_frames_for_id(objectid)
+        for fid, frame in zip(frameids, frames):
+            filedir = dir+'full_frames/' + str(fid) + '.png'
+            cv2.imwrite(filedir, frame)
+
+
+        #save cropped and centered
+        if not os.path.isdir(dir+'croppped_frames'):
+            os.makedirs(dir+'croppped_frames/')
+
+        img_list = get_fixed_box_imgs(frames, bboxes)
+        #print(objectid)
+        for fid, frame in zip(frameids, img_list):
+            filedir = dir+'croppped_frames/' + str(fid) + '.png'
+            cv2.imwrite(filedir, frame)
+
+        #save crop but not centered
+
+        #save sequence in one image

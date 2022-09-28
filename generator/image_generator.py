@@ -111,23 +111,3 @@ class ImageGenerator():
             if o.out_of_bounds(self.width, self.height) or o.get_lifetime()<=0:
                 self.objects.remove(o)
                 self.object_ids.remove(id)
-
-
-# imgen = ImageGenerator()
-
-# id = 0
-# while True:
-#     start = time.time()
-    
-#     n, img = imgen.next_image()
-
-#     cv2.imshow('Image', img)
-#     k = cv2.waitKey(27) & 0xFF
-#     if k == ord('q'):
-#         break
-
-#     # Keep 25fps
-#     time.sleep(max(1./25 - (time.time() - start), 0))
-
-# cv2.destroyWindow('Image')
-

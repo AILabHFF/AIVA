@@ -3,6 +3,7 @@ venv/
 temp/
 .vscode/
 __pycache__
+/data/saved
 
 # ignore ALL .log files
 *.log

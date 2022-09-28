@@ -9,11 +9,11 @@ class TestFrameBuffer(unittest.TestCase):
     '''
 
     def setUp(self):
-        self.framebuffer = FrameBuffer()
+        self.framebuffer = FrameBuffer('/test/test.mp4')
         self.sample_rgbframe = np.random.randint(255, size=(500,500,3),dtype=np.uint8)
 
     def test_loadbuffer(self):
-        framebuffer = FrameBuffer()
+        framebuffer = FrameBuffer('/test/test.mp4')
         self.assertIsInstance(framebuffer, object)
 
     def test_add_frame(self):
@@ -42,13 +42,9 @@ class TestFrameBuffer(unittest.TestCase):
             id = i
             frame = self.sample_rgbframe
             self.framebuffer.add_frame(id, frame)
-
-
         self.assertEqual(self.framebuffer.get_frameids(), [0,1,2,3,4])
-        self.framebuffer.update(4,[])
+        self.framebuffer.update(n_buffer=10)
         self.assertEqual(self.framebuffer.get_frameids(), [0,1,2,3,4])
-
-        #TODO: assert frame instance update
 
 
         # 2. Test longer buffer sequence
@@ -58,9 +54,9 @@ class TestFrameBuffer(unittest.TestCase):
             frame = self.sample_rgbframe
             self.framebuffer.add_frame(id, frame)
 
-        self.assertEqual(self.framebuffer.get_frameids(), [i for i in range(5,20)])
-        self.framebuffer.update(19,[])
-        self.assertEqual(self.framebuffer.get_frameids(), [i for i in range(9,20)])
+        self.assertEqual(self.framebuffer.get_frameids(), [i for i in range(5, 20)])
+        self.framebuffer.update(n_buffer=10)
+        self.assertEqual(self.framebuffer.get_frameids(), [i for i in range(10, 20)])
 
 
     def test_frame_id(self):
