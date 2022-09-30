@@ -75,5 +75,8 @@ def noise_reduction(original_img):
 
 
 def scale_coordinates(bboxids, scale):
-    return [int(np.round(i*scale, 0)) for i in bboxids[:-1]] + [bboxids[-1]]
+    if scale == 1:
+        return bboxids
+    else:
+        return [int(np.round(i*scale, 0)) for i in bboxids[:-1]] + [bboxids[-1]]
 

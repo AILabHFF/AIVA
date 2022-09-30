@@ -61,7 +61,7 @@ def run_video(file_path, show=True):
                 viewer.view_video()
 
             # Update framebuffer: delete old frames, clean objects etc.
-            frame_buffer.update(n_buffer=2)
+            frame_buffer.update(n_buffer=2, capture=False)
 
             # If escape button is pressed exit
             k = cv2.waitKey(1)

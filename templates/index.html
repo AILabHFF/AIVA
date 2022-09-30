@@ -1,0 +1,35 @@
+<!DOCTYPE html>
+<html>
+	<head>
+		<title>Flask App</title>
+		<link rel="stylesheet" href="{{ url_for('static', filename='css/main.css') }}">
+	</head>
+	<body>
+	<center>
+	<div class="container">
+		<div class="row">
+			<div class="col-lg-8  offset-lg-2">
+
+				
+				<h1>Event Detection: Meteoroids</h2>
+				<form method="post" action="{{ url_for('tasks') }}">
+
+				<input type="submit" value="Stop/Start" name="stop" />
+				<input type="submit" value="Detect" name="detect" />
+				<input type="submit" value="Grey" name="grey" />
+				<input type="submit" value="Capture" name="click"/>
+				<input type="submit" value="Start/Stop Recording" name="rec" />
+				</form>
+				
+				<img src="{{ url_for('video_feed') }}" height="50%">
+
+				<h3 style="font-family:courier;">Instructions:</h3>
+				<ol style="font-family:courier;">
+				<li>Please note that the button functionality is not yet available via internet connection, but only implemented locally.</li>
+			</div>
+		</div>
+	</div>
+	</center>
+
+	</body>
+</html>

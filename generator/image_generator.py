@@ -2,6 +2,7 @@ import numpy as np
 import time
 import cv2
 from scipy.spatial import distance
+import cv2
 
 
 class MovingObject():
@@ -42,11 +43,15 @@ class MovingObject():
             return True
 
 class ImageGenerator():
-    def __init__(self):
-        self.nextid = 0
+    def __init__(self, width, height):
+        self.frameid = 0
+        self.objectid = 0
         helligkeit = 120
-        self.width = 720
-        self.height = 480
+        self.width = width
+        self.height = height
+        self.lasttime = time.time()
+        self.fps = 5
+
 
         # Generate blury night sky
         img = np.uint8(helligkeit*np.random.rand(self.height, self.width))
@@ -54,18 +59,20 @@ class ImageGenerator():
         self.object_ids = []
         self.objects = []
 
-    def next_image(self):
-
-
+    def read(self):
+        self.frameid += 1
         chance = np.random.random()
         if chance>0.95:
-            self.add_object(self.nextid)
-            self.nextid+=1
+            self.objectid+=1
+            self.add_object(self.objectid)
+            
 
         # Generate nois of cam
         im = np.zeros((self.height,self.width), np.uint8)
         noise = cv2.randn(im,(0),(5))
         image = cv2.add(self.scene, noise)
+
+        image = cv2.cvtColor(image,cv2.COLOR_GRAY2RGB)
 
         #draw objects
         for id in self.object_ids:
@@ -78,7 +85,15 @@ class ImageGenerator():
         
         self.update_objects()
         self.destroy_objects()
-        return len(self.object_ids), image
+
+        # FPS management
+        time.sleep(max(1./self.fps - (time.time() - self.lasttime), 0))
+        return True, image
+
+    def get(self, x):
+        #so that the get frame method can be used the same way like opencv
+        if x == cv2.CAP_PROP_POS_FRAMES:
+            return self.frameid
 
     def add_object(self, id):
         x = np.random.randint(720)
@@ -111,3 +126,8 @@ class ImageGenerator():
             if o.out_of_bounds(self.width, self.height) or o.get_lifetime()<=0:
                 self.objects.remove(o)
                 self.object_ids.remove(id)
+
+    def release(self):
+        self.frameid = 0
+        self.object_ids = []
+        self.objects = []

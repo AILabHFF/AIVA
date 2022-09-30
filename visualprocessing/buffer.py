@@ -76,7 +76,7 @@ class FrameBuffer():
 
 
 
-    def update(self, n_buffer=2):
+    def update(self, n_buffer=2, capture=False):
         removed_boxids = []
 
 
@@ -100,8 +100,9 @@ class FrameBuffer():
                 removed_boxids += frame_boxids
 
         # write images for removed frames
-        for boxid in set(removed_boxids):
-            self.save_as_png(boxid)
+        if capture:
+            for boxid in set(removed_boxids):
+                self.save_as_png(boxid)
         
         # Finally remove all frames without active objects and not in buffer
         for fid in dont_keep:
@@ -151,7 +152,7 @@ class FrameBuffer():
             cv2.imwrite(filedir, frame)
 
 
-        #save cropped and centered
+        #save cropped full movement area image
         if not os.path.isdir(dir+'croppped_frames'):
             os.makedirs(dir+'croppped_frames/')
 
@@ -161,6 +162,7 @@ class FrameBuffer():
             filedir = dir+'croppped_frames/' + str(fid) + '.png'
             cv2.imwrite(filedir, frame)
 
-        #save crop but not centered
+        #save cropped and centered
+        
 
         #save sequence in one image

@@ -43,7 +43,7 @@ class ObjectDetector():
 
         #set min size for object depending on image size
         width, height, _ = frame.shape
-        minobjectsize = self.minobjectsize * width/720
+        minobjectsize = self.minobjectsize #* width/720
 
 
         # 2. Prepare image; grayscale and blur
