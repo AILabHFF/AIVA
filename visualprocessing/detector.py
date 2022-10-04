@@ -51,7 +51,7 @@ class ObjectDetector():
 
         if self.last_greyblur_frame == []:
             self.last_greyblur_frame = current_greyblurframe
-            return []
+            return [], current_greyblurframe
 
         if self.method == 'diff':
             mask = self.diff_method(current_greyblurframe)
@@ -71,5 +71,5 @@ class ObjectDetector():
                 x, y, w, h = cv2.boundingRect(contour)
                 detections.append([x,y,w,h])
 
-        return detections
+        return detections, mask
 

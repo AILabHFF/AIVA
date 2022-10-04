@@ -9,14 +9,16 @@ from visualprocessing.detector import ObjectDetector
 from visualprocessing.tracker import EuclideanDistTracker
 from visualprocessing.utils import scale_img
 from generator.image_generator import ImageGenerator
+from visualprocessing.classifier import ObjectClassifier
 
-
-global capture, rec_frame, grey, switch, detect, rec, out, image_gen
+global capture, rec_frame, subtract, switch, detect, rec, out, image_gen, last_time
 capture=0
-grey=0
+subtract=0
 detect=1
 switch=1
 rec=0
+
+last_time = time.time()
 
 #make shots directory to save pics
 try:
@@ -28,14 +30,15 @@ except OSError as error:
 #instatiate flask app  
 app = Flask(__name__, template_folder='./templates', static_folder='./static')
 
-video_file = '/media/disk1/KILabDaten/Geminiden 2021/Kamera2/CutVideos/true_cam2_NINJA3_S001_S001_T001_1.mov'
+video_file = '/media/disk1/KILabDaten/Geminiden 2021/Kamera2/CutVideos/true_cam2_NINJA3_S001_S001_T001_3.mov'
 
 
 frame_buffer = FrameBuffer(video_file)
-object_detector = ObjectDetector()
+object_detector = ObjectDetector(method='diff') # diff or subtractKNN
 object_tracker = EuclideanDistTracker()
+object_classifier = ObjectClassifier()
 
-input_source = 'gen'
+input_source = 'cam'
 if input_source=='cam':
     camera = cv2.VideoCapture(video_file)
 else:
@@ -49,37 +52,48 @@ def record(out):
         time.sleep(0.05)
         out.write(rec_frame)
 
-def mark_objects(img, box_ids):
-    for box_id in box_ids:
+def mark_objects(img, box_ids, labels):
+    for box_id, label in zip(box_ids, labels):
         x, y, w, h, id = box_id
         cv2.putText(img, str(id), (x,y-15), cv2.FONT_HERSHEY_PLAIN, 1, (255,0,0),2)
+        cv2.putText(img, str(label), (x,y+30), cv2.FONT_HERSHEY_PLAIN, 1, (0,0,255),2)
         cv2.rectangle(img, (x, y), (x+w, y+h), (0,255,0), 3)
     return img
 
-def detect_objects(frame, frameid):
-        img_rgb = cv2.cvtColor(src=frame, code=cv2.COLOR_BGR2RGB)
-        img = img_rgb.copy()
+def detect_objects(frame, frameid, show_thresh=False):
+    img_rgb = cv2.cvtColor(src=frame, code=cv2.COLOR_BGR2RGB)
 
-        # Add current frame to framebuffer
-        frame_buffer.add_frame(frameid, img)
+    # Add current frame to framebuffer
+    frame_buffer.add_frame(frameid, img_rgb.copy())
 
-        # Continue if not enough frames in buffer
-        if (len(frame_buffer.get_frameids())<2):
-            return frame
-        
-        # Object Detection
-        detections = object_detector.detect(img_rgb)
-        # Object Tracking
-        box_ids = object_tracker.update(detections)
 
-        # Add boxes to framebuffer
-        frame_buffer.add_bboxes_with_ids(frameid, box_ids)
+    # Continue if not enough frames in buffer
+    if (len(frame_buffer.get_frameids())<2):
+        return frame
+    
+    # Object Detection
+    detections, mask = object_detector.detect(img_rgb)
 
-        frame = mark_objects(frame, box_ids)
-
-        # Update framebuffer: delete old frames, clean objects etc.
+    if show_thresh:
         frame_buffer.update(n_buffer=2)
-        return frame            
+        mask = cv2.cvtColor(src=mask, code=cv2.COLOR_BGR2RGB)
+        return mask
+
+
+    # Object Tracking
+    box_ids = object_tracker.update(detections)
+
+    # Add boxes to framebuffer
+    frame_buffer.add_bboxes_with_ids(frameid, box_ids)
+
+    # Predict box labels and show them in frame
+    box_labels = object_classifier.predict(frame, box_ids)
+    frame = mark_objects(frame, box_ids=box_ids, labels=box_labels)
+
+
+    # Update framebuffer: delete old frames, clean objects etc.
+    frame_buffer.update(n_buffer=2)
+    return frame            
 
 def scale_img(original_img, scale_percent=100):
     if scale_img == 100:
@@ -96,7 +110,7 @@ def scale_img(original_img, scale_percent=100):
     return resized_frame 
 
 def gen_frames():  # generate frame by frame from camera
-    global out, capture, rec_frame
+    global out, capture, rec_frame, last_time
     while True:
         success, frame = camera.read() 
         if success:
@@ -107,18 +121,21 @@ def gen_frames():  # generate frame by frame from camera
             frame = scale_img(frame)
 
             if(detect):                
-                frame= detect_objects(frame, frameid)
-            if(grey):
-                frame = cv2.bitwise_not(frame)   
+                frame = detect_objects(frame, frameid, False)
+                
+            if(subtract):
+                frame = detect_objects(frame, frameid, True)
+
+                #frame = cv2.bitwise_not(frame)   
             if(capture):
-                capture=0
+                capture = 0
                 now = datetime.datetime.now()
                 p = os.path.sep.join(['shots', "shot_{}.png".format(str(now).replace(":",''))])
                 cv2.imwrite(p, frame)
             
             if(rec):
                 rec_frame=frame
-                frame= cv2.putText(frame, "Recording...", (0,25), cv2.FONT_HERSHEY_SIMPLEX, 1, (0,0,255),4)
+                frame = cv2.putText(frame, "Recording...", (0,25), cv2.FONT_HERSHEY_SIMPLEX, 1, (0,0,255),4)
             
             try:
                 ret, buffer = cv2.imencode('.jpg', frame)
@@ -130,6 +147,12 @@ def gen_frames():  # generate frame by frame from camera
                 
         else:
             pass
+        
+        # FPS management
+        now=time.time()
+        time.sleep(max(1./25 - (now - last_time), 0))
+        last_time = time.time()
+
 
 
 @app.route('/')
@@ -143,19 +166,23 @@ def video_feed():
 
 @app.route('/requests',methods=['POST','GET'])
 def tasks():
-    global switch, camera
+    global switch, camera, detect, subtract
     if request.method == 'POST':
         if request.form.get('click') == 'Capture':
             global capture
             capture=1
-        elif  request.form.get('grey') == 'Grey':
-            global grey
-            grey=not grey
+        elif  request.form.get('subtract') == 'Subtract':
+            #global subtract, detect
+            subtract=not subtract
+            detect = False
+            if(subtract):
+                time.sleep(4)
         elif  request.form.get('detect') == 'Detect':
-            global detect
+            #global detect
             detect=not detect 
+            subtract = False
             if(detect):
-                time.sleep(4)   
+                time.sleep(4)
         elif  request.form.get('stop') == 'Stop/Start':
             
             if(switch==1):
@@ -182,11 +209,10 @@ def tasks():
             elif(rec==False):
                 out.release()
                           
-                 
+     
     elif request.method=='GET':
         return render_template('index.html')
     return render_template('index.html')
-
 
 if __name__ == '__main__':
     app.run()

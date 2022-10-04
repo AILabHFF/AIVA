@@ -24,7 +24,8 @@ def crop_with_padding(original_image, boxpoints, img_dim):
     x, y, w, h = boxpoints
     cropped_img = original_image[y:y+h, x:x+w]
     if cropped_img.shape[:-1] != img_dim:
-        padded_img = np.zeros(img_dim)
+        dim = (img_dim[0], img_dim[1], cropped_img.shape[-1])
+        padded_img = np.zeros(dim)
         padded_img[:cropped_img.shape[0],:cropped_img.shape[1]] += cropped_img
         return padded_img
     return cropped_img

@@ -6,7 +6,7 @@ from visualprocessing.utils import scale_img, scale_coordinates
 from view.view import View
 
 
-def run_video(file_path, show=True):
+def run_video(file_path, show=True, capture_pngs=False):
     
     # Load video from file
     cap = cv2.VideoCapture(file_path)
@@ -44,7 +44,7 @@ def run_video(file_path, show=True):
                 continue
             
             # Object Detection
-            detections = object_detector.detect(img_rgb)
+            detections, mask = object_detector.detect(img_rgb)
             # Object Tracking
             box_ids = object_tracker.update(detections)
 
@@ -61,7 +61,7 @@ def run_video(file_path, show=True):
                 viewer.view_video()
 
             # Update framebuffer: delete old frames, clean objects etc.
-            frame_buffer.update(n_buffer=2, capture=False)
+            frame_buffer.update(n_buffer=2, capture=capture_pngs)
 
             # If escape button is pressed exit
             k = cv2.waitKey(1)
@@ -82,5 +82,5 @@ def run_video(file_path, show=True):
 
 if __name__ == "__main__":
     file_path = '/media/disk1/KILabDaten/Geminiden 2021/Kamera2/CutVideos/true_cam2_NINJA3_S001_S001_T001_1.mov'
-    run_video(file_path)
+    run_video(file_path, show=True, capture_pngs=False)
     print('done')

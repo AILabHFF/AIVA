@@ -43,7 +43,8 @@ class FrameBuffer():
 
     def add_frame(self, frameid, frame):
         if frameid in self.frame_ids:
-            sys.exit('Image with same ID already in buffer')
+            print('Image with same ID already in buffer')
+            #sys.exit('Image with same ID already in buffer')
         self.current_frame_id = frameid
         self.frame_ids.append(frameid)
         self.frame_instances.append(FrameObject(frameid, frame))

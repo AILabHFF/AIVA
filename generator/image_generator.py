@@ -49,8 +49,6 @@ class ImageGenerator():
         helligkeit = 120
         self.width = width
         self.height = height
-        self.lasttime = time.time()
-        self.fps = 5
 
 
         # Generate blury night sky
@@ -86,12 +84,10 @@ class ImageGenerator():
         self.update_objects()
         self.destroy_objects()
 
-        # FPS management
-        time.sleep(max(1./self.fps - (time.time() - self.lasttime), 0))
         return True, image
 
     def get(self, x):
-        #so that the get frame method can be used the same way like opencv
+        # The get frame method can be used the same way like in opencv
         if x == cv2.CAP_PROP_POS_FRAMES:
             return self.frameid
 

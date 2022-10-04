@@ -1,6 +1,7 @@
 # ignore ALL files in ANY directory named:
 venv/
 temp/
+data/
 .vscode/
 __pycache__
 /data/saved
