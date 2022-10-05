@@ -5,6 +5,10 @@ data/
 .vscode/
 __pycache__
 /data/saved
+/snapshots
 
 # ignore ALL .log files
 *.log
+
+# ignore some testfiles
+test.py

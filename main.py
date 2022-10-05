@@ -12,8 +12,9 @@ def run_video(file_path, show=True, capture_pngs=False):
     cap = cv2.VideoCapture(file_path)
 
     # Load FrameBuffer
-    frame_buffer = FrameBuffer(file_path)
-    object_detector = ObjectDetector()
+    frame_buffer = FrameBuffer(write_out=capture_pngs)
+    frame_buffer.set_filepath(file_path)
+    object_detector = ObjectDetector(method='diff')
     object_tracker = EuclideanDistTracker()
     viewer = View()
 
@@ -35,6 +36,9 @@ def run_video(file_path, show=True, capture_pngs=False):
 
             # Set current frame number as frameid
             frameid = int(cap.get(cv2.CAP_PROP_POS_FRAMES))
+
+            if frameid%1000==0:
+                print(frameid)
 
             # Add current frame to framebuffer
             frame_buffer.add_frame(frameid, img)
@@ -61,18 +65,18 @@ def run_video(file_path, show=True, capture_pngs=False):
                 viewer.view_video()
 
             # Update framebuffer: delete old frames, clean objects etc.
-            frame_buffer.update(n_buffer=2, capture=capture_pngs)
+            frame_buffer.update(n_buffer=2)
 
             # If escape button is pressed exit
             k = cv2.waitKey(1)
             if k == 27:
                 break
         
-        # Break if no frame returned
+        # Pass if no frame returned
         else:
-            break
+            pass
 
-
+    frame_buffer.clear_all()
     cv2.destroyAllWindows()
     cap.release()
 
@@ -81,6 +85,6 @@ def run_video(file_path, show=True, capture_pngs=False):
 
 
 if __name__ == "__main__":
-    file_path = '/media/disk1/KILabDaten/Geminiden 2021/Kamera2/CutVideos/true_cam2_NINJA3_S001_S001_T001_1.mov'
-    run_video(file_path, show=True, capture_pngs=False)
+    file_path = '/media/disk1/KILabDaten/Geminiden 2021/Kamera2/NINJA3_S001_S001_T001.MOV'
+    run_video(file_path, show=False, capture_pngs=True)
     print('done')

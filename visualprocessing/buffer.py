@@ -34,11 +34,14 @@ class FrameObject():
 
 
 class FrameBuffer():
-    def __init__(self, file_path):
-        self.file_path = file_path
+    def __init__(self, write_out=False):
         self.current_frame_id = 0
         self.frame_ids = []
         self.frame_instances = []
+        self.capture = write_out
+
+    def set_filepath(self, file_path):
+        self.file_path = file_path
 
 
     def add_frame(self, frameid, frame):
@@ -77,7 +80,7 @@ class FrameBuffer():
 
 
 
-    def update(self, n_buffer=2, capture=False):
+    def update(self, n_buffer=2):
         removed_boxids = []
 
 
@@ -101,7 +104,7 @@ class FrameBuffer():
                 removed_boxids += frame_boxids
 
         # write images for removed frames
-        if capture:
+        if self.capture:
             for boxid in set(removed_boxids):
                 self.save_as_png(boxid)
         
@@ -110,16 +113,28 @@ class FrameBuffer():
             self.remove_frame(fid)
 
 
+    def clear_all(self):
 
+        # active boxids that are in at least one frame that remains in buffer
+        active_ids_in_buffer = set()
+        for fid in self.frame_ids:
+            active_ids_in_buffer.update(self.get_frameInstance(fid).get_box_ids())
+
+        # write images for removed frames
+        if self.capture:
+            for boxid in active_ids_in_buffer:
+                self.save_as_png(boxid)
+
+
+        self.current_frame_id = 0
+        self.frame_ids = []
+        self.frame_instances = []
 
 
     def remove_frame(self, frameid):
         self.del_frameInstance(frameid)
         self.frame_ids.remove(frameid)
 
-    def clear_all(self):
-        self.frame_ids = []
-        self.frame_instances = []
 
 
     def get_frames_for_id(self, objectid):

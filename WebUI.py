@@ -11,39 +11,47 @@ from visualprocessing.utils import scale_img
 from generator.image_generator import ImageGenerator
 from visualprocessing.classifier import ObjectClassifier
 
-global capture, rec_frame, subtract, switch, detect, rec, out, image_gen, last_time
-capture=0
-subtract=0
-detect=1
-switch=1
-rec=0
 
-last_time = time.time()
 
-#make shots directory to save pics
+# make snapshots directory to save pics
+snapshot_path = './snapshot'
 try:
-    os.mkdir('./shots')
+    os.mkdir(snapshot_path)
 except OSError as error:
     pass
 
 
-#instatiate flask app  
-app = Flask(__name__, template_folder='./templates', static_folder='./static')
+#instantiate flask app  
+app = Flask(__name__)
+app.config.from_pyfile('config.py')
 
-video_file = '/media/disk1/KILabDaten/Geminiden 2021/Kamera2/CutVideos/true_cam2_NINJA3_S001_S001_T001_3.mov'
+
+# global bool case variables
+global onoff, detect, subtract, capture, rec
+onoff=True
+detect=True
+subtract=False
+capture=False
+rec=False
 
 
-frame_buffer = FrameBuffer(video_file)
+global camera, rec_frame, out, video_file
+
+# instantiate 
+frame_buffer = FrameBuffer()
 object_detector = ObjectDetector(method='diff') # diff or subtractKNN
 object_tracker = EuclideanDistTracker()
 object_classifier = ObjectClassifier()
 
-input_source = 'cam'
-if input_source=='cam':
-    camera = cv2.VideoCapture(video_file)
-else:
-    camera = ImageGenerator(width=720, height=480)
 
+
+def start_videosource():
+    global camera, video_file
+    if input_source=='cam':
+        camera = cv2.VideoCapture(video_file)
+    elif input_source=='gen':
+        camera = ImageGenerator(width=720, height=480)
+        camera.start()
 
 
 def record(out):
@@ -64,6 +72,7 @@ def detect_objects(frame, frameid, show_thresh=False):
     img_rgb = cv2.cvtColor(src=frame, code=cv2.COLOR_BGR2RGB)
 
     # Add current frame to framebuffer
+    frame_buffer.set_filepath(video_file)
     frame_buffer.add_frame(frameid, img_rgb.copy())
 
 
@@ -109,8 +118,9 @@ def scale_img(original_img, scale_percent=100):
     resized_frame = cv2.resize(original_img, dim, interpolation=cv2.INTER_AREA)
     return resized_frame 
 
-def gen_frames():  # generate frame by frame from camera
-    global out, capture, rec_frame, last_time
+def gen_frames(): 
+    """generate frame by frame from camera"""
+    global out, capture, rec_frame
     while True:
         success, frame = camera.read() 
         if success:
@@ -120,23 +130,23 @@ def gen_frames():  # generate frame by frame from camera
 
             frame = scale_img(frame)
 
-            if(detect):                
+            if detect:                
                 frame = detect_objects(frame, frameid, False)
                 
-            if(subtract):
+            if subtract:
                 frame = detect_objects(frame, frameid, True)
 
-                #frame = cv2.bitwise_not(frame)   
-            if(capture):
-                capture = 0
+            if capture:
+                capture = False
                 now = datetime.datetime.now()
-                p = os.path.sep.join(['shots', "shot_{}.png".format(str(now).replace(":",''))])
+                p = os.path.sep.join([snapshot_path, "shot_{}.png".format(str(now).replace(":",''))])
                 cv2.imwrite(p, frame)
             
-            if(rec):
+            if rec:
                 rec_frame=frame
                 frame = cv2.putText(frame, "Recording...", (0,25), cv2.FONT_HERSHEY_SIMPLEX, 1, (0,0,255),4)
             
+
             try:
                 ret, buffer = cv2.imencode('.jpg', frame)
                 frame = buffer.tobytes()
@@ -148,65 +158,65 @@ def gen_frames():  # generate frame by frame from camera
         else:
             pass
         
-        # FPS management
-        now=time.time()
-        time.sleep(max(1./25 - (now - last_time), 0))
-        last_time = time.time()
 
 
 
 @app.route('/')
 def index():
+    """AIVA home page."""
     return render_template('index.html')
     
     
 @app.route('/video_feed')
 def video_feed():
+    """Video streaming route. Put this in the src attribute of an img tag."""
     return Response(gen_frames(), mimetype='multipart/x-mixed-replace; boundary=frame')
 
-@app.route('/requests',methods=['POST','GET'])
+
+@app.route('/requests', methods=['POST', 'GET'])
 def tasks():
-    global switch, camera, detect, subtract
+    global onoff, camera, detect, subtract, frame_buffer
     if request.method == 'POST':
-        if request.form.get('click') == 'Capture':
-            global capture
-            capture=1
-        elif  request.form.get('subtract') == 'Subtract':
-            #global subtract, detect
-            subtract=not subtract
-            detect = False
-            if(subtract):
-                time.sleep(4)
-        elif  request.form.get('detect') == 'Detect':
-            #global detect
-            detect=not detect 
-            subtract = False
-            if(detect):
-                time.sleep(4)
-        elif  request.form.get('stop') == 'Stop/Start':
-            
-            if(switch==1):
-                switch=0
+
+        if  request.form.get('stop') == 'Stop/Start':     
+            if onoff:
+                onoff = not onoff
                 camera.release()
                 cv2.destroyAllWindows()
-                
+                frame_buffer.clear_all()
+
             else:
-                if input_source=='cam':
-                    camera = cv2.VideoCapture(video_file)
-                else:
-                    camera = ImageGenerator(width=720, height=480)
-                switch=1
+                onoff = not onoff
+                start_videosource()
+
+        elif  request.form.get('detect') == 'Detect':
+            detect = not detect 
+            subtract = False
+            if detect:
+                time.sleep(4)
+
+        elif  request.form.get('subtract') == 'Subtract':
+            subtract = not subtract
+            detect = False
+            if subtract:
+                time.sleep(4)
+
+        elif request.form.get('click') == 'Capture':
+            global capture
+            capture = True
+                
         elif  request.form.get('rec') == 'Start/Stop Recording':
             global rec, out
-            rec= not rec
-            if(rec):
+            rec = not rec
+            if rec:
                 now=datetime.datetime.now() 
                 fourcc = cv2.VideoWriter_fourcc(*'XVID')
                 out = cv2.VideoWriter('vid_{}.avi'.format(str(now).replace(":",'')), fourcc, 20.0, (640, 480))
+                
                 #Start new thread for recording the video
                 thread = Thread(target = record, args=[out,])
                 thread.start()
-            elif(rec==False):
+            else:
                 out.release()
                           
      
@@ -215,7 +225,10 @@ def tasks():
     return render_template('index.html')
 
 if __name__ == '__main__':
+    video_file = '/media/disk1/KILabDaten/Geminiden 2021/Kamera2/CutVideos/true_cam2_NINJA3_S001_S001_T001_3.mov'
+    input_source = 'gen'
+    start_videosource()
     app.run()
     
 camera.release()
-cv2.destroyAllWindows()     
+cv2.destroyAllWindows()

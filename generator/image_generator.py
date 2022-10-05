@@ -44,6 +44,7 @@ class MovingObject():
 
 class ImageGenerator():
     def __init__(self, width, height):
+        self.active = True
         self.frameid = 0
         self.objectid = 0
         helligkeit = 120
@@ -57,7 +58,28 @@ class ImageGenerator():
         self.object_ids = []
         self.objects = []
 
+
+        # FPS management
+        self.last_time = time.time()
+
+    def start(self):
+        self.active = True
+        self.frameid = 0
+        self.objectid = 0
+        self.object_ids = []
+        self.objects = []
+
+    def fps_controller(self):
+        now=time.time()
+        if  (now-self.last_time) >= 1/25:
+            return True
+        else:
+            return False
+
     def read(self):
+        if self.active==False and self.fps_controller:
+            return False, None
+
         self.frameid += 1
         chance = np.random.random()
         if chance>0.95:
@@ -84,6 +106,7 @@ class ImageGenerator():
         self.update_objects()
         self.destroy_objects()
 
+        self.last_time = time.time()
         return True, image
 
     def get(self, x):
@@ -124,6 +147,8 @@ class ImageGenerator():
                 self.object_ids.remove(id)
 
     def release(self):
+        self.active = False
         self.frameid = 0
+        self.objectid = 0
         self.object_ids = []
         self.objects = []
