@@ -17,6 +17,7 @@ class EuclideanDistTracker:
     def update(self, objects_rect):
         # Objects boxes and ids
         objects_bbs_ids = []
+        objects_bbs_ids_dict = {}
 
         # Get center point of new object
         for rect in objects_rect:
@@ -33,6 +34,8 @@ class EuclideanDistTracker:
                     self.center_points[id] = (cx, cy)
                     #print(self.center_points)
                     objects_bbs_ids.append([x, y, w, h, id])
+                    objects_bbs_ids_dict[id] = [x, y, w, h]
+
                     same_object_detected = True
                     break
 
@@ -40,15 +43,20 @@ class EuclideanDistTracker:
             if same_object_detected is False:
                 self.center_points[self.id_count] = (cx, cy)
                 objects_bbs_ids.append([x, y, w, h, self.id_count])
+                objects_bbs_ids_dict[self.id_count] = [x, y, w, h]
                 self.id_count += 1
 
         # Clean the dictionary by center points to remove IDS not used anymore
         new_center_points = {}
-        for obj_bb_id in objects_bbs_ids:
-            _, _, _, _, object_id = obj_bb_id
+        # for obj_bb_id in objects_bbs_ids:
+        #     _, _, _, _, object_id = obj_bb_id
+        #     center = self.center_points[object_id]
+        #     new_center_points[object_id] = center
+
+        for object_id in objects_bbs_ids_dict:
             center = self.center_points[object_id]
             new_center_points[object_id] = center
 
         # Update dictionary with IDs not used removed
         self.center_points = new_center_points.copy()
-        return objects_bbs_ids
+        return objects_bbs_ids_dict

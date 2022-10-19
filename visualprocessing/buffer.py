@@ -48,9 +48,10 @@ class FrameBuffer():
         if frameid in self.frame_ids:
             print('Image with same ID already in buffer')
             #sys.exit('Image with same ID already in buffer')
-        self.current_frame_id = frameid
-        self.frame_ids.append(frameid)
-        self.frame_instances.append(FrameObject(frameid, frame))
+        else:
+            self.current_frame_id = frameid
+            self.frame_ids.append(frameid)
+            self.frame_instances.append(FrameObject(frameid, frame))
 
     def add_bboxes_with_ids(self, frameid, boxes_with_ids):
         self.get_frameInstance(frameid).add_bboxes_with_ids(boxes_with_ids)
@@ -80,22 +81,25 @@ class FrameBuffer():
 
 
 
-    def update(self, n_buffer=2):
+
+
+    def update(self, buffer_min_size=2, buffer_max_size=30):
         removed_boxids = []
 
-
-        keep_in_buffer = self.frame_ids[-n_buffer:]
-        dont_keep = self.frame_ids[:-n_buffer]
+        keep_in_buffer = self.frame_ids[-buffer_min_size:]
+        dont_keep = self.frame_ids[:-buffer_min_size]
 
         # active boxids that are in at least one frame that remains in buffer
         active_ids_in_buffer = set()
         for fid in keep_in_buffer:
             active_ids_in_buffer.update(self.get_frameInstance(fid).get_box_ids())
 
-        # clean frameids from frames with in buffer active boxids
-        for fid in dont_keep.copy():
-            if any(x in self.get_frameInstance(fid).get_box_ids() for x in active_ids_in_buffer):
-                dont_keep.remove(fid)
+        # prevent memory leak with objects staying longer than buffer_max_size frames
+        if not len(self.frame_ids)>buffer_max_size:
+            # clean frameids from frames with in buffer active boxids
+            for fid in dont_keep.copy():
+                if any(x in self.get_frameInstance(fid).get_box_ids() for x in active_ids_in_buffer):
+                    dont_keep.remove(fid)        
 
         # get final boxids to remove
         for fid in dont_keep:
@@ -111,6 +115,7 @@ class FrameBuffer():
         # Finally remove all frames without active objects and not in buffer
         for fid in dont_keep:
             self.remove_frame(fid)
+
 
 
     def clear_all(self):

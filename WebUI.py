@@ -65,44 +65,43 @@ def mark_objects(img, box_ids, labels):
         x, y, w, h, id = box_id
         cv2.putText(img, str(id), (x,y-15), cv2.FONT_HERSHEY_PLAIN, 1, (255,0,0),2)
         cv2.putText(img, str(label), (x,y+30), cv2.FONT_HERSHEY_PLAIN, 1, (0,0,255),2)
-        cv2.rectangle(img, (x, y), (x+w, y+h), (0,255,0), 3)
+        #cv2.rectangle(img, (x+int(w/2)-30, y+int(h/2)-30), (x+int(w/2)+30, y+int(h/2)+30), (0,255,0), 2)
+        cv2.rectangle(img, (x-30, y-30), (x+w+30, y+h+30), (0,255,0), 2)
+        
+
     return img
 
+
+
 def detect_objects(frame, frameid, show_thresh=False):
-    img_rgb = cv2.cvtColor(src=frame, code=cv2.COLOR_BGR2RGB)
-
-    # Add current frame to framebuffer
-    frame_buffer.set_filepath(video_file)
-    frame_buffer.add_frame(frameid, img_rgb.copy())
-
 
     # Continue if not enough frames in buffer
     if (len(frame_buffer.get_frameids())<2):
         return frame
+
     
     # Object Detection
-    detections, mask = object_detector.detect(img_rgb)
+    detections, mask = object_detector.detect(frame_buffer.get_frame(frameid))
 
     if show_thresh:
-        frame_buffer.update(n_buffer=2)
         mask = cv2.cvtColor(src=mask, code=cv2.COLOR_BGR2RGB)
         return mask
 
 
     # Object Tracking
     box_ids = object_tracker.update(detections)
+    box_ids = [box_ids[k]+[k] for k in box_ids]
 
     # Add boxes to framebuffer
     frame_buffer.add_bboxes_with_ids(frameid, box_ids)
 
     # Predict box labels and show them in frame
     box_labels = object_classifier.predict(frame, box_ids)
-    frame = mark_objects(frame, box_ids=box_ids, labels=box_labels)
+    frame = mark_objects(frame.copy(), box_ids=box_ids, labels=box_labels)
 
-
-    # Update framebuffer: delete old frames, clean objects etc.
-    frame_buffer.update(n_buffer=2)
     return frame            
+
+
 
 def scale_img(original_img, scale_percent=100):
     if scale_img == 100:
@@ -128,13 +127,25 @@ def gen_frames():
             # Set current frame number as frameid
             frameid = int(camera.get(cv2.CAP_PROP_POS_FRAMES))
 
-            frame = scale_img(frame)
+            if frameid in frame_buffer.frame_ids:
+                continue
 
-            if detect:                
-                frame = detect_objects(frame, frameid, False)
+            frame = scale_img(frame)
+            frame = cv2.cvtColor(src=frame, code=cv2.COLOR_BGR2RGB)
+
+            # Add current frame to framebuffer
+            frame_buffer.set_filepath(video_file)
+            frame_buffer.add_frame(frameid, frame.copy())
+
+            if detect:
+                frame = detect_objects(frame, frameid, show_thresh=False)
                 
-            if subtract:
-                frame = detect_objects(frame, frameid, True)
+            elif subtract:
+                frame = detect_objects(frame, frameid, show_thresh=True)
+
+
+            # Update framebuffer (delete old frames, save frames with objects)
+            frame_buffer.update(buffer_min_size=2)
 
             if capture:
                 capture = False
@@ -143,7 +154,7 @@ def gen_frames():
                 cv2.imwrite(p, frame)
             
             if rec:
-                rec_frame=frame
+                rec_frame = frame
                 frame = cv2.putText(frame, "Recording...", (0,25), cv2.FONT_HERSHEY_SIMPLEX, 1, (0,0,255),4)
             
 
@@ -179,27 +190,27 @@ def tasks():
     if request.method == 'POST':
 
         if  request.form.get('stop') == 'Stop/Start':     
+            onoff = not onoff
             if onoff:
                 onoff = not onoff
+                start_videosource()
+            else:
                 camera.release()
                 cv2.destroyAllWindows()
                 frame_buffer.clear_all()
 
-            else:
-                onoff = not onoff
-                start_videosource()
-
         elif  request.form.get('detect') == 'Detect':
-            detect = not detect 
-            subtract = False
+            detect = not detect                
             if detect:
+                subtract = False
                 time.sleep(4)
-
+                
         elif  request.form.get('subtract') == 'Subtract':
             subtract = not subtract
-            detect = False
             if subtract:
+                detect = False
                 time.sleep(4)
+
 
         elif request.form.get('click') == 'Capture':
             global capture
@@ -225,7 +236,7 @@ def tasks():
     return render_template('index.html')
 
 if __name__ == '__main__':
-    video_file = '/media/disk1/KILabDaten/Geminiden 2021/Kamera2/CutVideos/true_cam2_NINJA3_S001_S001_T001_3.mov'
+    video_file = '/media/disk1/KILabDaten/Geminiden 2021/Kamera2/CutVideos/true_cam2_NINJA3_S001_S001_T001_1.mov'
     input_source = 'gen'
     start_videosource()
     app.run()

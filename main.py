@@ -9,7 +9,9 @@ from view.view import View
 def run_video(file_path, show=True, capture_pngs=False):
     
     # Load video from file
+
     cap = cv2.VideoCapture(file_path)
+    cap.set(cv2.CAP_PROP_POS_FRAMES, 49000)
 
     # Load FrameBuffer
     frame_buffer = FrameBuffer(write_out=capture_pngs)
@@ -65,7 +67,7 @@ def run_video(file_path, show=True, capture_pngs=False):
                 viewer.view_video()
 
             # Update framebuffer: delete old frames, clean objects etc.
-            frame_buffer.update(n_buffer=2)
+            frame_buffer.update(buffer_min_size=2)
 
             # If escape button is pressed exit
             k = cv2.waitKey(1)
