@@ -1,12 +1,13 @@
 from visualprocessing.utils import *
 import tensorflow as tf
 import numpy as np
+import os
 
 class ObjectClassifier():
-    def __init__(self):
+    def __init__(self, base_path=''):
         self.dim = (96,96)
         self.class_labels = {0:'???', 1:'meteor'}
-        model_path = 'data/gemi_model.hdf5'
+        model_path = os.path.join(base_path, 'data/gemi_model.hdf5')
         self.classifier = tf.keras.models.load_model(model_path, custom_objects=None, compile=True)
 
 

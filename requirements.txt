@@ -3,6 +3,8 @@ numpy
 pandas
 opencv-python
 tensorflow
+scipy
+Flask
 
 
 ###### Requirements with Version Specifiers ######

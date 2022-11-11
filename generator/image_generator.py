@@ -71,7 +71,7 @@ class ImageGenerator():
 
     def fps_controller(self):
         now=time.time()
-        if  (now-self.last_time) >= 1/25:
+        if (now-self.last_time) >= 1/25:
             return True
         else:
             return False

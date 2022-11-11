@@ -1,3 +1,4 @@
+from cv2 import threshold
 from flask import Flask, render_template, Response, request
 import datetime, time
 import os
@@ -10,7 +11,6 @@ from visualprocessing.tracker import EuclideanDistTracker
 from visualprocessing.utils import scale_img
 from generator.image_generator import ImageGenerator
 from visualprocessing.classifier import ObjectClassifier
-
 
 
 # make snapshots directory to save pics
@@ -37,11 +37,16 @@ rec=False
 
 global camera, rec_frame, out, video_file
 
+global threshold1, ksize1
+threshold = 60
+ksize1 = 5
+
+
 # instantiate 
 frame_buffer = FrameBuffer()
 object_detector = ObjectDetector(method='diff') # diff or subtractKNN
 object_tracker = EuclideanDistTracker()
-object_classifier = ObjectClassifier()
+object_classifier = ObjectClassifier(base_path=os.getcwd())
 
 
 
@@ -65,8 +70,8 @@ def mark_objects(img, box_ids, labels):
         x, y, w, h, id = box_id
         cv2.putText(img, str(id), (x,y-15), cv2.FONT_HERSHEY_PLAIN, 1, (255,0,0),2)
         cv2.putText(img, str(label), (x,y+30), cv2.FONT_HERSHEY_PLAIN, 1, (0,0,255),2)
-        #cv2.rectangle(img, (x+int(w/2)-30, y+int(h/2)-30), (x+int(w/2)+30, y+int(h/2)+30), (0,255,0), 2)
-        cv2.rectangle(img, (x-30, y-30), (x+w+30, y+h+30), (0,255,0), 2)
+        cv2.rectangle(img, (x+int(w/2)-30, y+int(h/2)-30), (x+int(w/2)+30, y+int(h/2)+30), (0,255,0), 2)
+        #cv2.rectangle(img, (x-30, y-30), (x+w+30, y+h+30), (0,255,0), 2)
         
 
     return img
@@ -92,6 +97,7 @@ def detect_objects(frame, frameid, show_thresh=False):
     box_ids = object_tracker.update(detections)
     box_ids = [box_ids[k]+[k] for k in box_ids]
 
+
     # Add boxes to framebuffer
     frame_buffer.add_bboxes_with_ids(frameid, box_ids)
 
@@ -101,21 +107,6 @@ def detect_objects(frame, frameid, show_thresh=False):
 
     return frame            
 
-
-
-def scale_img(original_img, scale_percent=100):
-    if scale_img == 100:
-        return original_img
-    
-    #width = 720
-    height = 720
-    
-    scale_percent = 720 * 100/original_img.shape[0]
-
-    width = int(original_img.shape[1] * scale_percent / 100)
-    dim = (width, height)
-    resized_frame = cv2.resize(original_img, dim, interpolation=cv2.INTER_AREA)
-    return resized_frame 
 
 def gen_frames(): 
     """generate frame by frame from camera"""
@@ -186,7 +177,7 @@ def video_feed():
 
 @app.route('/requests', methods=['POST', 'GET'])
 def tasks():
-    global onoff, camera, detect, subtract, frame_buffer
+    global onoff, camera, detect, subtract, frame_buffer, threshold1, ksize1
     if request.method == 'POST':
 
         if  request.form.get('stop') == 'Stop/Start':     
@@ -229,14 +220,14 @@ def tasks():
                 thread.start()
             else:
                 out.release()
-                          
+     
      
     elif request.method=='GET':
         return render_template('index.html')
     return render_template('index.html')
 
 if __name__ == '__main__':
-    video_file = '/media/disk1/KILabDaten/Geminiden 2021/Kamera2/CutVideos/true_cam2_NINJA3_S001_S001_T001_1.mov'
+    video_file = '/mnt/disk1/KILabDaten/Geminiden2021/Kamera2/CutVideos/true_cam2_NINJA3_S001_S001_T001_1.mov'
     input_source = 'gen'
     start_videosource()
     app.run()

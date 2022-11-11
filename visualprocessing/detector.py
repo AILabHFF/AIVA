@@ -8,12 +8,19 @@ class ObjectDetector():
         self.background_subtractor = cv2.createBackgroundSubtractorKNN(history=50)
         self.method = method
         self.minobjectsize = minobjectsize  # min object size is scaled with image size (with widht 720 min size is minobjectsize)
+        self.subtract_threshold = 60
+        self.kernel_size = 5
+
+    def set_threshold(self, threshold):
+        self.subtract_threshold = threshold
+    def set_ksize(self, ksize):
+        self.kernel_size = ksize
 
     def get_greyblur_frame(self, original_img):
         # Grayscale
         prepared_frame = cv2.cvtColor(original_img, cv2.COLOR_BGR2GRAY)
         # Blur image
-        prepared_frame = cv2.GaussianBlur(src=prepared_frame, ksize=(5, 5), sigmaX=0)
+        prepared_frame = cv2.GaussianBlur(src=prepared_frame, ksize=(self.kernel_size, self.kernel_size), sigmaX=0)
         return prepared_frame
 
     def subtractKNN_method(self, original_img):
@@ -31,7 +38,7 @@ class ObjectDetector():
         kernel = np.ones((5, 5))
         dillute_frame = cv2.dilate(diff_frame, kernel, 1)
         # Only take different areas that are different enough (>20 / 255)
-        thresh_frame = cv2.threshold(src=dillute_frame, thresh=60, maxval=255, type=cv2.THRESH_BINARY)[1]
+        thresh_frame = cv2.threshold(src=dillute_frame, thresh=self.subtract_threshold, maxval=255, type=cv2.THRESH_BINARY)[1]
         return thresh_frame
 
 

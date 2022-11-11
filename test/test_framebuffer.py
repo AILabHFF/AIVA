@@ -43,7 +43,7 @@ class TestFrameBuffer(unittest.TestCase):
             frame = self.sample_rgbframe
             self.framebuffer.add_frame(id, frame)
         self.assertEqual(self.framebuffer.get_frameids(), [0,1,2,3,4])
-        self.framebuffer.update(n_buffer=10)
+        self.framebuffer.update(buffer_min_size=10)
         self.assertEqual(self.framebuffer.get_frameids(), [0,1,2,3,4])
 
 
@@ -55,7 +55,7 @@ class TestFrameBuffer(unittest.TestCase):
             self.framebuffer.add_frame(id, frame)
 
         self.assertEqual(self.framebuffer.get_frameids(), [i for i in range(5, 20)])
-        self.framebuffer.update(n_buffer=10)
+        self.framebuffer.update(buffer_min_size=10)
         self.assertEqual(self.framebuffer.get_frameids(), [i for i in range(10, 20)])
 
 

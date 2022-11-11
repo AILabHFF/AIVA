@@ -14,18 +14,19 @@
 				<h1>AI Video Analyzer: Meteors</h2>
 				<form method="post" action="{{ url_for('tasks') }}">
 
-				<input type="submit" value="Stop/Start" name="stop" />
-				<input type="submit" value="Detect" name="detect" />
-				<input type="submit" value="Subtract" name="subtract" />
-				<input type="submit" value="Capture" name="click"/>
-				<input type="submit" value="Start/Stop Recording" name="rec" />
+					<input type="submit" value="Stop/Start" name="stop" />
+					<input type="submit" value="Detect" name="detect" />
+					<input type="submit" value="Subtract" name="subtract" />
+					<input type="submit" value="Capture" name="click"/>
+					<input type="submit" value="Start/Stop Recording" name="rec" />
+					
 				</form>
 				
 				<img src="{{ url_for('video_feed') }}" height="50%">
 
 				<h3 style="font-family:courier;">Instructions:</h3>
 				<ol style="font-family:courier;">
-				<li>Please note that the button functionality is not yet available via internet connection, but only implemented locally.</li>
+				<li>Please note that this app is still under development and therefore may have some bugs!</li>
 			</div>
 		</div>
 	</div>

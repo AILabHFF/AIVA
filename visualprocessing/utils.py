@@ -2,23 +2,26 @@ import cv2
 import numpy as np
 
 
+# def scale_img(original_img, scale_percent=100):
+#     if scale_img == 100:
+#         return original_img
+#     width = int(original_img.shape[1] * scale_percent / 100)
+#     height = int(original_img.shape[0] * scale_percent / 100)
+#     dim = (width, height)
+#     resized_frame = cv2.resize(original_img, dim, interpolation=cv2.INTER_AREA)
+#     return resized_frame
+
 def scale_img(original_img, scale_percent=100):
     if scale_img == 100:
         return original_img
+    
+    #width = 720
+    height = 720
+    scale_percent = height * 100/original_img.shape[0]
     width = int(original_img.shape[1] * scale_percent / 100)
-    height = int(original_img.shape[0] * scale_percent / 100)
     dim = (width, height)
     resized_frame = cv2.resize(original_img, dim, interpolation=cv2.INTER_AREA)
-    return resized_frame
-
-def scale_img(original_img, scale_percent):
-    if scale_img == 100:
-        return original_img
-    width = int(original_img.shape[1] * scale_percent / 100)
-    height = int(original_img.shape[0] * scale_percent / 100)
-    dim = (width, height)
-    resized_frame = cv2.resize(original_img, dim, interpolation=cv2.INTER_AREA)
-    return resized_frame
+    return resized_frame 
 
 def crop_with_padding(original_image, boxpoints, img_dim):
     x, y, w, h = boxpoints
