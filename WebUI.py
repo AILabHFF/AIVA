@@ -12,6 +12,10 @@ from visualprocessing.utils import scale_img
 from generator.image_generator import ImageGenerator
 from visualprocessing.classifier import ObjectClassifier
 
+from model.meteor_model import MeteorModel
+import numpy as np
+import torch
+
 
 # make snapshots directory to save pics
 snapshot_path = './snapshot'
@@ -43,11 +47,12 @@ ksize1 = 5
 
 
 # instantiate 
-frame_buffer = FrameBuffer()
+frame_buffer = FrameBuffer(write_out=False)
 object_detector = ObjectDetector(method='diff') # diff or subtractKNN
 object_tracker = EuclideanDistTracker()
 object_classifier = ObjectClassifier(base_path=os.getcwd())
 
+meteor_model = MeteorModel(weithts_path='model/model_spp_crossval_v4.pt')
 
 
 def start_videosource():
@@ -135,8 +140,50 @@ def gen_frames():
                 frame = detect_objects(frame, frameid, show_thresh=True)
 
 
+            if len(frame_buffer.sum_image_dict) != 0:
+                bboxes = frame_buffer.sum_image_dict.keys()
+                sum_image_list = list(frame_buffer.sum_image_dict.values())
+
+
+                #print(sum_image_list)
+
+                #sum_image_list = torch.tensor(sum_image_list).permute(0, 3, 2, 1)
+
+                #print(sum_image_list.shape)
+                #sum_image_list = sum_image_list.float()
+
+                #print(sum_image_list)
+                
+                if len(sum_image_list) != 0:
+                    labels = []
+                    for img in sum_image_list:
+                        img = torch.tensor(img).unsqueeze(0).float()
+                        img = img.permute(0, 3, 2, 1)
+                        labels.append(meteor_model.predict_label(img))
+                    print(labels)
+
+                    #print(y)
+
+                    # highlight bboxes in frame with meteor labels
+                    for bbox, label in zip(bboxes, labels):
+                        x, y, w, h = bbox
+                        #print(bbox)
+                        if label=='meteor':
+                            #cv2.rectangle(frame, (x-30, y-30), (x+w+30, y+h+30), (255,0,0), 2)
+                            #cv2.addText(frame, 'meteor', (x,y-15), cv2.FONT_HERSHEY_PLAIN, 1, (255,0,0),2)
+
+                            # add sum image to frame at bbox position
+                            #sum_image = frame_buffer.sum_image_dict[bbox]
+                            cv2.putText(frame, 'METEOR', (x,y+30), cv2.FONT_HERSHEY_PLAIN, 1, (0,255,255),2)
+                            cv2.rectangle(frame, (x+int(w/2)-30, y+int(h/2)-30), (x+int(w/2)+30, y+int(h/2)+30), (0,255,0), 10)
+
+
+
+
             # Update framebuffer (delete old frames, save frames with objects)
             frame_buffer.update(buffer_min_size=2)
+
+
 
             if capture:
                 capture = False
@@ -224,11 +271,11 @@ def tasks():
      
     elif request.method=='GET':
         return render_template('index.html')
-    return render_template('index.html')
+    return render_templcate('index.html')
 
 if __name__ == '__main__':
     video_file = '/mnt/disk1/KILabDaten/Geminiden2021/Kamera2/CutVideos/true_cam2_NINJA3_S001_S001_T001_1.mov'
-    input_source = 'gen'
+    input_source = 'cam'    #cam or gen
     start_videosource()
     app.run()
     

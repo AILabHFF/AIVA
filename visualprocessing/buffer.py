@@ -39,6 +39,8 @@ class FrameBuffer():
         self.frame_ids = []
         self.frame_instances = []
         self.capture = write_out
+        self.sum_image_dict = {}
+
 
     def set_filepath(self, file_path):
         self.file_path = file_path
@@ -81,8 +83,6 @@ class FrameBuffer():
 
 
 
-
-
     def update(self, buffer_min_size=2, buffer_max_size=30):
         removed_boxids = []
 
@@ -111,12 +111,21 @@ class FrameBuffer():
         if self.capture:
             for boxid in set(removed_boxids):
                 self.save_as_png(boxid)
+
+
+        self.sum_image_dict = {}
+        for boxid in set(removed_boxids):
+            sum_img, bbox = self.get_sum_img(boxid)
+
+            self.sum_image_dict[bbox] = sum_img
+
         
         # Finally remove all frames without active objects and not in buffer
         for fid in dont_keep:
             self.remove_frame(fid)
 
 
+    
 
     def clear_all(self):
 
@@ -153,9 +162,49 @@ class FrameBuffer():
                 fids.append(frameid)
                 bboxes.append(finst.get_bbox(objectid))
         return frames, fids, bboxes
+    
+
+    def get_sum_img(self, objectid):
+
+        frames, frameids, bboxes = self.get_frames_for_id(objectid)
+        img_list = get_fixed_box_imgs(frames, bboxes)
+
+        #sum_img = np.max(img_list, axis=0)#/len(img_list)
+
+        
+        diff_imgs = []
+        for i in range(1,len(img_list)-1):
+            diff_imgs.append(cv2.absdiff(img_list[i], img_list[i-1]))
+        
+        try:
+            sum_img = np.max(diff_imgs, axis=0)
+        except:
+            sum_img = np.zeros((54,96,3), dtype=np.uint8)
+
+        if sum_img.shape[1] == 0 or sum_img.shape[0] == 0:
+            # create empty image
+            sum_img = np.zeros((54,96,3), dtype=np.uint8)
 
 
-    def save_as_png(self, objectid):
+        # if width is bigger than height resize to widht 96 (and pad up and down with zeros)
+
+        if sum_img.shape[1] > sum_img.shape[0]:
+            sum_img = cv2.resize(sum_img, (96, int(96*sum_img.shape[0]/sum_img.shape[1])))
+        else:
+            sum_img = cv2.resize(sum_img, (int(54*sum_img.shape[1]/sum_img.shape[0]), 54))
+
+
+        # resize to either width 96 or height 54 and pad with zeros
+        if sum_img.shape[0] < 54:
+            sum_img = np.pad(sum_img, ((int((54-sum_img.shape[0])/2),int((54-sum_img.shape[0])/2)),(0,0),(0,0)), 'constant')
+
+        if sum_img.shape[1] < 96:
+            sum_img = np.pad(sum_img, ((0,0),(int((96-sum_img.shape[1])/2),int((96-sum_img.shape[1])/2)),(0,0)), 'constant')
+
+        return sum_img, get_min_max_coords(bboxes)
+
+
+    def save_as_png(self, objectid, single_frame=True, sum_images=False):
         file_name = os.path.basename(os.path.realpath(self.file_path))
         img_path = './data/saved/'
         dir = img_path+file_name + '/' + str(objectid) + '/'
@@ -163,27 +212,41 @@ class FrameBuffer():
             os.makedirs(dir)
             print("Directory '%s' created" %dir)
 
+
+        frames, frameids, bboxes = self.get_frames_for_id(objectid)
+
+        write_single_frames = False
         #save full frame sequence
         if not os.path.isdir(dir+'full_frames'):
             os.makedirs(dir+'full_frames/')
+        if write_single_frames==True:
+            for fid, frame in zip(frameids, frames):
+                filedir = dir+'full_frames/' + str(fid) + '.png'
+                cv2.imwrite(filedir, frame)
 
-        frames, frameids, bboxes = self.get_frames_for_id(objectid)
-        for fid, frame in zip(frameids, frames):
-            filedir = dir+'full_frames/' + str(fid) + '.png'
-            cv2.imwrite(filedir, frame)
-
-
-        #save cropped full movement area image
-        if not os.path.isdir(dir+'croppped_frames'):
-            os.makedirs(dir+'croppped_frames/')
 
         img_list = get_fixed_box_imgs(frames, bboxes)
-        #print(objectid)
-        for fid, frame in zip(frameids, img_list):
-            filedir = dir+'croppped_frames/' + str(fid) + '.png'
-            cv2.imwrite(filedir, frame)
+        cropped = False
+        if cropped==True:
+            #save cropped full movement area image
+            if not os.path.isdir(dir+'croppped_frames'):
+                os.makedirs(dir+'croppped_frames/')
 
-        #save cropped and centered
+            #print(objectid)
+            for fid, frame in zip(frameids, img_list):
+                filedir = dir+'croppped_frames/' + str(fid) + '.png'
+                cv2.imwrite(filedir, frame)
+            sum_img = np.max(img_list, axis=0)#/len(img_list)
+
         
+        
+        sum_img, _ = self.get_sum_img(objectid)
+
+
 
         #save sequence in one image
+        if not os.path.isdir(dir+'summed_frames'):
+            os.makedirs(dir+'summed_frames/')
+        filedir = dir+'summed_frames/' + str(objectid) + '.png'
+        cv2.imwrite(filedir, sum_img)
+        print("saved image for objectid: ", objectid)
