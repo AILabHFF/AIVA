@@ -21,4 +21,4 @@ RUN pip3 install -r requirements.txt
 
 # Set
 #CMD [ "python3", "-m" , "main.py", "--host=0.0.0.0"]
-CMD python3 WebUI.py
+CMD python3 webui.py

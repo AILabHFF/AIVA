@@ -2,14 +2,6 @@ import cv2
 import numpy as np
 
 
-# def scale_img(original_img, scale_percent=100):
-#     if scale_img == 100:
-#         return original_img
-#     width = int(original_img.shape[1] * scale_percent / 100)
-#     height = int(original_img.shape[0] * scale_percent / 100)
-#     dim = (width, height)
-#     resized_frame = cv2.resize(original_img, dim, interpolation=cv2.INTER_AREA)
-#     return resized_frame
 
 def scale_img(original_img, scale_percent=100):
     if scale_img == 100:
@@ -17,21 +9,54 @@ def scale_img(original_img, scale_percent=100):
     
     #width = 720
     height = 720
-    scale_percent = height * 100/original_img.shape[0]
+    #height = original_img.shape[0]
+    #scale_percent = height * 100/original_img.shape[0]
+    height = int(original_img.shape[0] * scale_percent / 100)
     width = int(original_img.shape[1] * scale_percent / 100)
     dim = (width, height)
     resized_frame = cv2.resize(original_img, dim, interpolation=cv2.INTER_AREA)
     return resized_frame 
 
+
+def resize_and_pad(img, target_size):
+    # Determine the larger dimension
+    h, w = img.shape[:2]
+    if h > w:
+        new_h = target_size[0]
+        new_w = int(w * new_h / h)
+    else:
+        new_w = target_size[1]
+        new_h = int(h * new_w / w)
+
+    # Resize the image while maintaining aspect ratio
+    resized_img = cv2.resize(img, (new_w, new_h), interpolation=cv2.INTER_AREA)
+
+    # Pad the smaller dimension to center the image
+    padded_img = np.zeros((target_size[0], target_size[1], 3), dtype=np.uint8)
+    start_h = (target_size[0] - new_h) // 2
+    start_w = (target_size[1] - new_w) // 2
+    padded_img[start_h:start_h+new_h, start_w:start_w+new_w, :] = resized_img
+
+    return padded_img
+
+
+
 def crop_with_padding(original_image, boxpoints, img_dim):
+    # Define target size
+    target_size = img_dim
+
+    # Crop image from original image
     x, y, w, h = boxpoints
     cropped_img = original_image[y:y+h, x:x+w]
-    if cropped_img.shape[:-1] != img_dim:
-        dim = (img_dim[0], img_dim[1], cropped_img.shape[-1])
-        padded_img = np.zeros(dim)
-        padded_img[:cropped_img.shape[0],:cropped_img.shape[1]] += cropped_img
-        return padded_img
-    return cropped_img
+
+    # Resize image to fit target size while maintaining aspect ratio
+    resized_img = resize_and_pad(cropped_img, target_size)
+
+    return resized_img
+
+
+
+
 
 def pointInRect(point, rect):
     x1, y1, w, h = rect

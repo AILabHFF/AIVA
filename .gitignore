@@ -1,14 +1,10 @@
 # ignore ALL files in ANY directory named:
 venv/
 temp/
-data/samples
-data/saved*
-data/videosamples
+output/
 
 .vscode/
 __pycache__
-/data/saved
-/snapshots
 
 # ignore ALL .log files
 *.log

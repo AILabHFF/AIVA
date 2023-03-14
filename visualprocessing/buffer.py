@@ -79,7 +79,6 @@ class FrameBuffer():
 
     def add_object(self, frameid, objectid, objectbbox):
         self.get_FrameInstance(frameid).add_object(objectid, objectbbox)
-        
 
 
 
@@ -124,9 +123,8 @@ class FrameBuffer():
         for fid in dont_keep:
             self.remove_frame(fid)
 
-
     
-
+    
     def clear_all(self):
 
         # active boxids that are in at least one frame that remains in buffer
@@ -166,10 +164,8 @@ class FrameBuffer():
 
     def get_sum_img(self, objectid):
 
-        frames, frameids, bboxes = self.get_frames_for_id(objectid)
+        frames, _, bboxes = self.get_frames_for_id(objectid)
         img_list = get_fixed_box_imgs(frames, bboxes)
-
-        #sum_img = np.max(img_list, axis=0)#/len(img_list)
 
         
         diff_imgs = []
@@ -181,32 +177,19 @@ class FrameBuffer():
         except:
             sum_img = np.zeros((54,96,3), dtype=np.uint8)
 
-        if sum_img.shape[1] == 0 or sum_img.shape[0] == 0:
-            # create empty image
-            sum_img = np.zeros((54,96,3), dtype=np.uint8)
+
+        # Define size for resizing (in order to fit into model input)
+        target_size = (54, 96)
+        sum_img = resize_and_pad(sum_img, target_size)
 
 
-        # if width is bigger than height resize to widht 96 (and pad up and down with zeros)
-
-        if sum_img.shape[1] > sum_img.shape[0]:
-            sum_img = cv2.resize(sum_img, (96, int(96*sum_img.shape[0]/sum_img.shape[1])))
-        else:
-            sum_img = cv2.resize(sum_img, (int(54*sum_img.shape[1]/sum_img.shape[0]), 54))
-
-
-        # resize to either width 96 or height 54 and pad with zeros
-        if sum_img.shape[0] < 54:
-            sum_img = np.pad(sum_img, ((int((54-sum_img.shape[0])/2),int((54-sum_img.shape[0])/2)),(0,0),(0,0)), 'constant')
-
-        if sum_img.shape[1] < 96:
-            sum_img = np.pad(sum_img, ((0,0),(int((96-sum_img.shape[1])/2),int((96-sum_img.shape[1])/2)),(0,0)), 'constant')
 
         return sum_img, get_min_max_coords(bboxes)
 
 
-    def save_as_png(self, objectid, single_frame=True, sum_images=False):
+    def save_as_png(self, objectid, write_single_frames=True, sum_images=True):
         file_name = os.path.basename(os.path.realpath(self.file_path))
-        img_path = './data/saved/'
+        img_path = './output/saved/'
         dir = img_path+file_name + '/' + str(objectid) + '/'
         if not os.path.isdir(dir):
             os.makedirs(dir)
@@ -215,7 +198,6 @@ class FrameBuffer():
 
         frames, frameids, bboxes = self.get_frames_for_id(objectid)
 
-        write_single_frames = False
         #save full frame sequence
         if not os.path.isdir(dir+'full_frames'):
             os.makedirs(dir+'full_frames/')

@@ -1,5 +1,9 @@
 # %%
 import torchvision.models as models
+from torchvision.models import ResNet18_Weights
+
+
+
 import torch
 import torch.nn as nn
 #import torchvision.transforms as transforms
@@ -239,7 +243,7 @@ class MeteorModel():
             self.device = torch.device("cuda:0" if torch.cuda.is_available() else "cpu")
         else:
             self.device = device
-        resnet18 = models.resnet18(pretrained=True)
+        resnet18 = models.resnet18(weights=ResNet18_Weights.IMAGENET1K_V1)
         feature_extractor = nn.Sequential(*(list(resnet18.children())[0:8])) #second way
         
         self.model = SPP_Net(feature_extractor).to(self.device)

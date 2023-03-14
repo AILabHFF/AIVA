@@ -1,36 +1,118 @@
 <!DOCTYPE html>
 <html>
-	<head>
-		<title>AI Video Analyzer - AIVA</title>
-		<link rel="stylesheet" href="{{ url_for('static', filename='css/main.css') }}">
-	</head>
-	<body>
-	<center>
-	<div class="container">
-		<div class="row">
-			<div class="col-lg-8  offset-lg-2">
+  <head>
+    <title>Meteor Detection WebUI</title>
+    <link rel="stylesheet" type="text/css" href="{{ url_for('static', filename='style.css') }}">
+  </head>
+  <body>
+    <h1>Meteor Detection WebUI</h1>
+    <form method="POST" action="{{ url_for('upload') }}" enctype="multipart/form-data" id="upload-form">
 
-				
-				<h1>AI Video Analyzer: Meteors</h2>
-				<form method="post" action="{{ url_for('tasks') }}">
+      <label for="video_file">Select a video file:</label>
+      <input type="file" name="video_file" accept=".mp4,.avi,.mkv,.mov">
+      <br>
+      <label for="scale">Scale:</label>
+      <input type="number" id="scale" name="scale" min="10" max="200" value="50">
+      <br>
+      <label for="method">Method:</label>
+      <select id="method" name="method">
+        <option value="frameDiff" selected>Frame Difference</option>
+        <option value="subtractKNN">Subtract KNN</option>
+      </select>
+      <br>
+      <label for="threshold">Threshold:</label>
+      <input type="number" id="threshold" name="threshold" min="20" max="255" value="60">
+      <br>
+      <label for="ksize">Kernel Size:</label>
+      <input type="number" id="ksize" name="ksize" min="2" max="5" value="5">
+      <br>
+      <label for="object_minsize">Object Min Size:</label>
+      <input type="number" id="object_minsize" name="object_minsize" min="1" max="50" value="10">
+      <br>
+      <label for="object_maxsize">Object Max Size:</label>
+      <input type="number" id="object_maxsize" name="object_maxsize" min="10" max="1000" value="200">
+      <br>
+      <button type="submit" id="upload-btn" disabled>Start Stream</button>
+    </form>
+    <div class="progress">
+      <div class="progress-bar" role="progressbar" aria-valuemin="0" aria-valuemax="100"></div>
+    </div>
+    <div id="progress-text"></div>
 
-					<input type="submit" value="Stop/Start" name="stop" />
-					<input type="submit" value="Detect" name="detect" />
-					<input type="submit" value="Subtract" name="subtract" />
-					<input type="submit" value="Capture" name="click"/>
-					<input type="submit" value="Start/Stop Recording" name="rec" />
-					
-				</form>
-				
-				<img src="{{ url_for('video_feed') }}" height="50%">
+    <script>
+      // Get the upload form and button
+      const uploadForm = document.querySelector('#upload-form');
+      const uploadBtn = document.querySelector('#upload-btn');
 
-				<h3 style="font-family:courier;">Instructions:</h3>
-				<ol style="font-family:courier;">
-				<li>Please note that this app is still under development and therefore may have some bugs!</li>
-			</div>
-		</div>
-	</div>
-	</center>
 
-	</body>
+      // Disable the upload button initially
+      uploadBtn.disabled = true;
+      
+      // Add event listener for file selection
+      uploadForm.querySelector('input[type="file"]').addEventListener('change', function() {
+        // Enable the upload button when a file is selected
+        uploadBtn.disabled = false;
+      });
+      
+      // Add event listener for form submission
+      uploadForm.addEventListener('submit', function(e) {
+        e.preventDefault();
+        
+        // Get the file input and create a FormData object
+        const fileInput = document.querySelector('input[type="file"]');
+        const formData = new FormData();
+
+        // Add an FormData entry for each form field
+        formData.append('video_file', fileInput.files[0]);
+        formData.append('scale', document.querySelector('#scale').value);
+        formData.append('method', document.querySelector('#method').value);
+        formData.append('threshold', document.querySelector('#threshold').value);
+        formData.append('ksize', document.querySelector('#ksize').value);
+        formData.append('object_minsize', document.querySelector('#object_minsize').value);
+        formData.append('object_maxsize', document.querySelector('#object_maxsize').value);
+        
+        // Create an AJAX request to upload the file
+        const xhr = new XMLHttpRequest();
+        xhr.open('POST', '{{ url_for('upload') }}', true);
+        
+        // Update progress bar during upload
+        xhr.upload.addEventListener('progress', function(e) {
+          if (e.lengthComputable) {
+            const percent = Math.round((e.loaded / e.total) * 100);
+            const progressBar = document.querySelector('.progress-bar');
+            progressBar.style.width = percent + '%';
+            progressBar.setAttribute('aria-valuenow', percent);
+            const progressText = document.querySelector('#progress-text');
+            progressText.innerHTML = percent + '%';
+          }
+        });
+        
+        // Handle AJAX response
+        xhr.onreadystatechange = function() {
+          if (xhr.readyState === 4 && xhr.status === 200) {
+
+            const response = JSON.parse(xhr.responseText);
+            const parameters = {
+              video_file: response.video_file,
+              scale: response.scale,
+              method: response.method,
+              threshold: response.threshold,
+              ksize: response.ksize,
+              object_minsize: response.object_minsize,
+              object_maxsize: response.object_maxsize
+            };
+            window.location.href = '{{ url_for('video_feed') }}?' + new URLSearchParams(parameters).toString();
+
+
+          }
+        };
+        
+        // Send the AJAX request
+        xhr.send(formData);
+        
+        // Disable the upload button to prevent multiple submissions
+        //uploadBtn.disabled = true;
+      });
+    </script>
+  </body>
 </html>

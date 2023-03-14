@@ -2,19 +2,19 @@ from visualprocessing.utils import *
 import numpy as np
 
 class ObjectDetector():
-    def __init__(self, method='diff', minobjectsize=10):
-        self.last_greyblur_frame = []
-        #self.background_subtracktor = cv2.createBackgroundSubtractorMOG2(history=50, varThreshold=40)
-        self.background_subtractor = cv2.createBackgroundSubtractorKNN(history=50)
+    def __init__(self, method='frameDiff', minobjectsize=10, maxobjectsize=1000, threshold=60, ksize=5):
         self.method = method
-        self.minobjectsize = minobjectsize  # min object size is scaled with image size (with widht 720 min size is minobjectsize)
-        self.subtract_threshold = 60
-        self.kernel_size = 5
 
-    def set_threshold(self, threshold):
+        if self.method == 'subtractKNN':
+            self.background_subtractor = cv2.createBackgroundSubtractorKNN(history=10)
+            #self.background_subtracktor = cv2.createBackgroundSubtractorMOG2(history=10, varThreshold=40)
+
+        self.last_greyblur_frame = []
+        self.minobjectsize = minobjectsize
+        self.maxobjectsize = maxobjectsize
         self.subtract_threshold = threshold
-    def set_ksize(self, ksize):
         self.kernel_size = ksize
+
 
     def get_greyblur_frame(self, original_img):
         # Grayscale
@@ -25,7 +25,7 @@ class ObjectDetector():
 
     def subtractKNN_method(self, original_img):
         mask = self.background_subtractor.apply(original_img)
-        _, mask = cv2.threshold(mask, 254,255,cv2.THRESH_BINARY)
+        _, mask = cv2.threshold(mask, 254, 255, cv2.THRESH_BINARY)
         return mask
 
     def diff_method(self, greyblur_frame):
@@ -48,11 +48,6 @@ class ObjectDetector():
         '''
         frame = currentframe
 
-        #set min size for object depending on image size
-        width, height, _ = frame.shape
-        minobjectsize = self.minobjectsize #* width/720
-
-
         # 2. Prepare image; grayscale and blur
         current_greyblurframe = self.get_greyblur_frame(frame)
 
@@ -60,7 +55,7 @@ class ObjectDetector():
             self.last_greyblur_frame = current_greyblurframe
             return [], current_greyblurframe
 
-        if self.method == 'diff':
+        if self.method == 'frameDiff':
             mask = self.diff_method(current_greyblurframe)
 
         if self.method == 'subtractKNN':
@@ -74,7 +69,7 @@ class ObjectDetector():
         detections = []
         for contour in contours:
             area = cv2.contourArea(contour)
-            if area > minobjectsize:
+            if area > self.minobjectsize and area < self.maxobjectsize:
                 x, y, w, h = cv2.boundingRect(contour)
                 detections.append([x,y,w,h])
 

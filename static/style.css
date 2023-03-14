@@ -1,0 +1,94 @@
+/* Set a font and background color for the page */
+body {
+    font-family: Arial, sans-serif;
+    background-color: #474747;
+  }
+  
+/* Style the header */
+h1 {
+    margin-top: 30px;
+    margin-bottom: 20px;
+    text-align: center;
+    font-size: 36px;
+    color: rgb(255, 255, 255);
+  }
+  
+/* Style the form */
+form {
+    margin: 0 auto;
+    max-width: 500px;
+    padding: 20px;
+    background-color: #fff;
+    border-radius: 10px;
+    box-shadow: 0px 2px 10px rgba(0, 0, 0, 0.3);
+  }
+  
+/* Style the form labels */
+label {
+    display: block;
+    margin-bottom: 10px;
+    font-size: 18px;
+    color: #555;
+  }
+
+/* Style the file input */
+input[type="file"] {
+    margin-bottom: 20px;
+    font-size: 16px;
+    color: #555;
+  }
+  
+/* Style the number input */
+input[type="number"] {
+    width: 50px;
+    margin-bottom: 10px;
+    font-size: 16px;
+    color: #555;
+  }
+  
+/* Style the select input */
+select {
+    width: 120px;
+    margin-bottom: 10px;
+    font-size: 16px;
+    color: #555;
+  }
+  
+/* Style the button */
+  button {
+    display: block;
+    margin-top: 20px;
+    font-size: 18px;
+    background-color: #4c6daf;
+    color: #fff;
+    border: none;
+    padding: 10px 20px;
+    border-radius: 5px;
+    cursor: pointer;
+  }
+  
+/* Style the progress bar */
+.progress {
+    margin-top: 30px;
+    margin-bottom: 20px;
+    height: 20px;
+    background-color: #f5f5f5;
+    border-radius: 10px;
+    overflow: hidden;
+  }
+  
+.progress-bar {
+    height: 100%;
+    background-color: #4c6daf;
+    width: 0%;
+    transition: width 0.3s ease-in-out;
+  }
+  
+/* Style the progress text */
+#progress-text {
+    font-size: 18px;
+    text-align: center;
+    color: #555;
+    margin-bottom: 30px;
+  }
+  
