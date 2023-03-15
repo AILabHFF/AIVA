@@ -1,6 +1,3 @@
-i have this sh file, can you generate a windows bat file for me?
-
-
 #!/bin/bash
 
 # Check if virtual environment exists
@@ -14,11 +11,9 @@ then
   # Install required packages
   echo "Installing required packages..."
   pip install -r requirements.txt
-
 fi
 
 source venv/bin/activate
-
 
 # Run Flask app
 echo "Running Flask app..."

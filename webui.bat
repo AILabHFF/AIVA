@@ -5,16 +5,22 @@ if not exist "venv" (
   REM Create virtual environment
   echo Creating virtual environment...
   python -m venv venv
+
+  REM Activate virtual environment
+  echo Activating virtual environment...
+  call venv\Scripts\activate.bat
+
+  REM Install required packages
+  echo Installing required packages...
+  python -m pip install --upgrade pip
+  python -m pip install -r requirements.txt
+)
+else (
+  REM Activate virtual environment
+  echo Activating virtual environment...
+  call venv\Scripts\activate.bat
 )
 
-REM Activate virtual environment
-echo Activating virtual environment...
-call venv\Scripts\activate.bat
-
-REM Install required packages
-echo Installing required packages...
-python -m pip install --upgrade pip
-python -m pip install -r requirements.txt
 
 REM Run Flask app
 echo Running Flask app...
