@@ -1,0 +1,6 @@
+{
+    "model_shape": [1, "c", "w", "h"],
+    "width": 96,
+    "height": 54,
+    "c": 3
+}

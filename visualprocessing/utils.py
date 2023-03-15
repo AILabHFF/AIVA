@@ -2,7 +2,6 @@ import cv2
 import numpy as np
 
 
-
 def scale_img(original_img, scale_percent=100):
     if scale_img == 100:
         return original_img
@@ -16,7 +15,6 @@ def scale_img(original_img, scale_percent=100):
     dim = (width, height)
     resized_frame = cv2.resize(original_img, dim, interpolation=cv2.INTER_AREA)
     return resized_frame 
-
 
 def resize_and_pad(img, target_size):
     # Determine the larger dimension
@@ -39,8 +37,6 @@ def resize_and_pad(img, target_size):
 
     return padded_img
 
-
-
 def crop_with_padding(original_image, boxpoints, img_dim):
     # Define target size
     target_size = img_dim
@@ -53,10 +49,6 @@ def crop_with_padding(original_image, boxpoints, img_dim):
     resized_img = resize_and_pad(cropped_img, target_size)
 
     return resized_img
-
-
-
-
 
 def pointInRect(point, rect):
     x1, y1, w, h = rect
@@ -89,26 +81,6 @@ def get_fixed_box_imgs(frame_list, bbox_list):
         img_list.append(cropped_img)
     return img_list
 
-# def get_sum_img(frame_list, bbox_list):
-#     minx, miny, maxx, maxy = get_min_max_coords(bbox_list)
-
-#     sum_img = []
-
-#     for frame, bbox in zip(frame_list, bbox_list):
-#         x1, x2, y1, y2 = get_xy_from_bbox(bbox)
-#         cropped_img = frame[y1:y2, x1:x2]
-#         # place cropped image in empty image
-#         empty_img = np.zeros((maxy-miny, maxx-minx, 3))
-
-
-#         # place cropped image in empty image at the correct position
-#         empty_img[y1-miny:y2-miny, x1-minx:x2-minx] = cropped_img
-
-#         sum_img.append(empty_img)
-
-#     sum_img = np.max(sum_img, axis=0)
-
-#     return empty_img
 
 def noise_reduction(original_img):
     '''
@@ -122,7 +94,6 @@ def noise_reduction(original_img):
 
     dst = cv2.fastNlMeansDenoisingColored(original_img, None, 10, 10, 7, 15) 
     return dst
-
 
 def scale_coordinates(bboxids, scale):
     if scale == 1:

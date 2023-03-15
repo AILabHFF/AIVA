@@ -259,6 +259,7 @@ class MeteorModel():
         return preds
     
     def predict_label(self, x):
+        x = self.reshape_input_image(x)
         x = x.to(self.device)
         with torch.no_grad():
             output = self.model(x)
@@ -269,5 +270,10 @@ class MeteorModel():
             return 'meteor'
         else:
             return 'not_meteor'
+        
+    def reshape_input_image(self, image):
+        image = torch.tensor(image).unsqueeze(0).float()
+        image = image.permute(0, 3, 2, 1)
+        return image
     
 

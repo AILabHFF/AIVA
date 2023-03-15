@@ -32,7 +32,6 @@ class FrameObject():
         return self.bboxes_with_ids[box_id]
 
 
-
 class FrameBuffer():
     def __init__(self, write_out=False):
         self.current_frame_id = 0
@@ -41,15 +40,12 @@ class FrameBuffer():
         self.capture = write_out
         self.sum_image_dict = {}
 
-
     def set_filepath(self, file_path):
         self.file_path = file_path
-
 
     def add_frame(self, frameid, frame):
         if frameid in self.frame_ids:
             print('Image with same ID already in buffer')
-            #sys.exit('Image with same ID already in buffer')
         else:
             self.current_frame_id = frameid
             self.frame_ids.append(frameid)
@@ -64,7 +60,6 @@ class FrameBuffer():
     def get_frame(self, frameid):
         return self.get_frameInstance(frameid).get_frame()
 
-
     def get_frameInstance(self, frameid):
         for frameinst in self.frame_instances:
             if frameinst.frame_id == frameid:
@@ -76,11 +71,8 @@ class FrameBuffer():
     def add_processedFrame(self, frameid, processed_frame):
         self.get_FrameInstance(frameid).add_processedframe(processed_frame)
 
-
     def add_object(self, frameid, objectid, objectbbox):
         self.get_FrameInstance(frameid).add_object(objectid, objectbbox)
-
-
 
     def update(self, buffer_min_size=2, buffer_max_size=30):
         removed_boxids = []
@@ -111,22 +103,16 @@ class FrameBuffer():
             for boxid in set(removed_boxids):
                 self.save_as_png(boxid)
 
-
         self.sum_image_dict = {}
         for boxid in set(removed_boxids):
             sum_img, bbox = self.get_sum_img(boxid)
-
             self.sum_image_dict[bbox] = sum_img
 
-        
         # Finally remove all frames without active objects and not in buffer
         for fid in dont_keep:
             self.remove_frame(fid)
 
-    
-    
     def clear_all(self):
-
         # active boxids that are in at least one frame that remains in buffer
         active_ids_in_buffer = set()
         for fid in self.frame_ids:
@@ -137,17 +123,13 @@ class FrameBuffer():
             for boxid in active_ids_in_buffer:
                 self.save_as_png(boxid)
 
-
         self.current_frame_id = 0
         self.frame_ids = []
         self.frame_instances = []
 
-
     def remove_frame(self, frameid):
         self.del_frameInstance(frameid)
         self.frame_ids.remove(frameid)
-
-
 
     def get_frames_for_id(self, objectid):
         frames = []
@@ -161,7 +143,6 @@ class FrameBuffer():
                 bboxes.append(finst.get_bbox(objectid))
         return frames, fids, bboxes
     
-
     def get_sum_img(self, objectid):
 
         frames, _, bboxes = self.get_frames_for_id(objectid)
@@ -177,15 +158,11 @@ class FrameBuffer():
         except:
             sum_img = np.zeros((54,96,3), dtype=np.uint8)
 
-
         # Define size for resizing (in order to fit into model input)
         target_size = (54, 96)
         sum_img = resize_and_pad(sum_img, target_size)
 
-
-
         return sum_img, get_min_max_coords(bboxes)
-
 
     def save_as_png(self, objectid, write_single_frames=True, sum_images=True):
         file_name = os.path.basename(os.path.realpath(self.file_path))
@@ -194,7 +171,6 @@ class FrameBuffer():
         if not os.path.isdir(dir):
             os.makedirs(dir)
             print("Directory '%s' created" %dir)
-
 
         frames, frameids, bboxes = self.get_frames_for_id(objectid)
 
@@ -205,7 +181,6 @@ class FrameBuffer():
             for fid, frame in zip(frameids, frames):
                 filedir = dir+'full_frames/' + str(fid) + '.png'
                 cv2.imwrite(filedir, frame)
-
 
         img_list = get_fixed_box_imgs(frames, bboxes)
         cropped = False
@@ -220,11 +195,7 @@ class FrameBuffer():
                 cv2.imwrite(filedir, frame)
             sum_img = np.max(img_list, axis=0)#/len(img_list)
 
-        
-        
         sum_img, _ = self.get_sum_img(objectid)
-
-
 
         #save sequence in one image
         if not os.path.isdir(dir+'summed_frames'):

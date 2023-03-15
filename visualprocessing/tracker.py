@@ -16,7 +16,6 @@ class EuclideanDistTracker:
         self.id_count = 1
         self.maxdist = 30
 
-
     def update(self, objects_rect):
         # Objects boxes and ids
         objects_bbs_ids_dict = {}
