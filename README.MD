@@ -7,8 +7,12 @@ Notably, the app is highly accessible and can be used remotely from anywhere in 
 ![](data/WebUIAnimation.gif)
 
 # Installation
-- Install [Python3](https://www.python.org/downloads/release/python-3100/) (Version 3.7 - 3.10)
+→ Install [Python3](https://www.python.org/downloads/release/python-3106/) (Version 3.7 - 3.10)
+
+→ Download or use Git clone to download this project
+
 ### On Linux:
+→ Open the Terminal, cd into the project folder
 ```
 chmod +x webui.sh
 ./webui.sh
@@ -18,15 +22,19 @@ chmod +x webui.sh
 ```
 double click the webui.bat 
 ```
-then open the given link in yout Internet Browser
+→ A new tab with the MAD Midnight WebUI should open in your Internet Browser.
+If not, then **ctrl** & **left-click** on the link provided in your Terminal or simply copy and paste it into your Internet Browser.
 
 
 
 # Docker
-Alternatively, you can use Docker to build and run MAD Midnight WebUI. Follow these steps:
+Alternatively, you can use [Docker](https://docs.docker.com/get-docker/) to build and run MAD Midnight WebUI. Follow these steps:
 
-## Build the Docker image with the tag "madmidnight" by running:
+### Build the Docker image with the tag "madmidnight" by running in your Terminal:
+```
 docker build -t madmidnight .
-
+```
 ## Run the Docker container with the madmidnight image, including a volume, by running:
-docker run --gpus all -p 8888:8888 -v /media/disk1/KILabDaten/:/home/jovyan/work --rm  madmidnight
+```
+docker run --gpus all -p 8888:8888 --rm madmidnight
+```

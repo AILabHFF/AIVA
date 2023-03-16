@@ -276,4 +276,3 @@ class MeteorModel():
         image = image.permute(0, 3, 2, 1)
         return image
     
-

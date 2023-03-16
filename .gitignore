@@ -2,6 +2,7 @@
 venv/
 temp/
 output/
+uploads/
 
 .vscode/
 __pycache__
