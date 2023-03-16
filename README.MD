@@ -38,3 +38,7 @@ docker build -t madmidnight .
 ```
 docker run --gpus all -p 5000:5000 --rm madmidnight
 ```
+
+# Output
+As output we get both the individual images on which meteors appear and a summed image of all images of the same meteor which can be used for astrometry:
+![](data/meteor_output.jpeg)
