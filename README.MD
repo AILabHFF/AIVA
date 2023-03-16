@@ -7,7 +7,7 @@ Notably, the app is highly accessible and can be used remotely from anywhere in 
 ![](data/WebUIAnimation.gif)
 
 # Installation
-→ Install [Python3](https://www.python.org/downloads/release/python-3106/) (Version 3.7 - 3.10)
+→ Install [Python3](https://www.python.org/downloads/release/python-3106/) (Version 3.8 - 3.10)
 
 → Download or use Git clone to download this project
 
@@ -28,7 +28,7 @@ If not, then **ctrl** & **left-click** on the link provided in your Terminal or 
 
 
 # Docker
-Alternatively, you can use [Docker](https://docs.docker.com/get-docker/) to build and run MAD Midnight WebUI. Follow these steps:
+Alternatively, you can use [Docker](https://docs.docker.com/get-docker/) to build and run the MAD Midnight WebUI. Follow these steps:
 
 ### Build the Docker image with the tag "madmidnight" by running in your Terminal:
 ```
