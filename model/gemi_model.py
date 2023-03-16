@@ -14,9 +14,11 @@ class SimpleMeteorClassifier():
         with open('model/gemi_model.json') as json_file:
             model_properties = json.load(json_file)
         self.dim = (model_properties['height'], model_properties['width'])
-            
-        self.class_labels = {0:'not_meteor', 1:'meteor'}
+        self.class_labels = model_properties['class_labels']
+        self.class_labels = {v: k for k, v in self.class_labels.items()}
+
         self.classifier = tf.keras.models.load_model(model_path, custom_objects=None, compile=True)
+
 
     def predict(self, frame, bboxes):
         # Crop detected objects in frame
@@ -28,6 +30,7 @@ class SimpleMeteorClassifier():
             pred_labels = self.classifier.predict(cropped_images, verbose=0)
             pred_labels = self.get_labels(pred_labels)
         return pred_labels
+
 
     def get_labels(self, preds):
         preds = np.round(preds,0).astype(int)

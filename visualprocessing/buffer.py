@@ -12,7 +12,6 @@ class FrameObject():
         self.box_ids = []
         self.bboxes_with_ids = {}
 
-
     def add_bboxes_with_ids(self, bbox_and_ids):
         for box_id in bbox_and_ids:
             x, y, w, h, id = box_id
@@ -30,6 +29,9 @@ class FrameObject():
 
     def get_bbox(self, box_id):
         return self.bboxes_with_ids[box_id]
+
+
+
 
 
 class FrameBuffer():
@@ -102,11 +104,16 @@ class FrameBuffer():
         if self.capture:
             for boxid in set(removed_boxids):
                 self.save_as_png(boxid)
+            if len(self.sum_image_dict) > 0:
+                for boxid in self.sum_image_dict:
+                    self.save_sum_image_as_png(boxid)
 
+
+        # keep sum images for removed frames for one frame to be able to classify in the next step
         self.sum_image_dict = {}
         for boxid in set(removed_boxids):
-            sum_img, bbox = self.get_sum_img(boxid)
-            self.sum_image_dict[bbox] = sum_img
+            sum_img, full_diff_image, bbox = self.get_sum_img(boxid)
+            self.sum_image_dict[boxid] = {'cropped_sum_image': sum_img, 'full_sum_image': full_diff_image, 'bbox': bbox, 'label': None}
 
         # Finally remove all frames without active objects and not in buffer
         for fid in dont_keep:
@@ -144,25 +151,33 @@ class FrameBuffer():
         return frames, fids, bboxes
     
     def get_sum_img(self, objectid):
-
         frames, _, bboxes = self.get_frames_for_id(objectid)
         img_list = get_fixed_box_imgs(frames, bboxes)
 
-        
         diff_imgs = []
+        full_diff_imgs = []
         for i in range(1,len(img_list)-1):
             diff_imgs.append(cv2.absdiff(img_list[i], img_list[i-1]))
-        
+            full_diff_imgs.append(cv2.absdiff(frames[i], frames[0]))
+
         try:
-            sum_img = np.max(diff_imgs, axis=0)
+            sum_img = np.max(diff_imgs, axis=0) # sum of all cropped images
         except:
             sum_img = np.zeros((54,96,3), dtype=np.uint8)
 
-        # Define size for resizing (in order to fit into model input)
-        target_size = (54, 96)
-        sum_img = resize_and_pad(sum_img, target_size)
+        # sum of all full images on a static median background
+        full_diff = np.max(full_diff_imgs, axis=0)
+        medianFrame = np.median(frames, axis=0).astype(dtype=np.uint8)
+        full_diff = np.max([full_diff, medianFrame], axis=0)
 
-        return sum_img, get_min_max_coords(bboxes)
+        # Define size for resizing (in order to fit into model input)
+        #target_size = (54, 96)
+        #sum_img = resize_and_pad(sum_img, target_size)
+
+        return sum_img, full_diff, get_min_max_coords(bboxes)
+    
+
+
 
     def save_as_png(self, objectid, write_single_frames=True, sum_images=True):
         file_name = os.path.basename(os.path.realpath(self.file_path))
@@ -182,6 +197,8 @@ class FrameBuffer():
                 filedir = dir+'full_frames/' + str(fid) + '.png'
                 cv2.imwrite(filedir, frame)
 
+        
+
         img_list = get_fixed_box_imgs(frames, bboxes)
         cropped = False
         if cropped==True:
@@ -193,13 +210,21 @@ class FrameBuffer():
             for fid, frame in zip(frameids, img_list):
                 filedir = dir+'croppped_frames/' + str(fid) + '.png'
                 cv2.imwrite(filedir, frame)
-            sum_img = np.max(img_list, axis=0)#/len(img_list)
 
-        sum_img, _ = self.get_sum_img(objectid)
+    def save_sum_image_as_png(self, objectid):
+        file_name = os.path.basename(os.path.realpath(self.file_path))
+        img_path = './output/saved/'
+        dir = img_path+file_name + '/' + str(objectid) + '/'
+        if not os.path.isdir(dir):
+            os.makedirs(dir)
+            print("Directory '%s' created" %dir)
+        #save cropped full movement area image
+        if not os.path.isdir(dir+'full_sum_frames'):
+            os.makedirs(dir+'full_sum_frames/')
 
-        #save sequence in one image
-        if not os.path.isdir(dir+'summed_frames'):
-            os.makedirs(dir+'summed_frames/')
-        filedir = dir+'summed_frames/' + str(objectid) + '.png'
-        cv2.imwrite(filedir, sum_img)
-        print("saved image for objectid: ", objectid)
+        label = self.sum_image_dict[objectid]['label']
+        full_sum_img = self.sum_image_dict[objectid]['full_sum_image']
+
+        #save full sum image
+        filedir = dir + 'full_sum_frames/' + label + '_' + str(objectid) + '.png'
+        cv2.imwrite(filedir, full_sum_img)

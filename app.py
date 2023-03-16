@@ -1,4 +1,4 @@
-import os
+import os, sys
 import cv2
 from flask import Flask, render_template, Response, request, redirect, url_for, jsonify
 from werkzeug.utils import secure_filename
@@ -28,6 +28,7 @@ def generate_frames(video_file, scale, method, threshold, ksize, object_minsize,
                    b'Content-Type: text/event-stream\r\n\r\n' + b'event: progress\n' + f'data: {progress}\n\n'.encode())
             
     cap.release()
+    print('Video processing completed.')
 
 @app.route('/')
 def index():

@@ -19,6 +19,9 @@ RUN pip3 install --upgrade pip
 RUN apt-get update && apt-get install ffmpeg libsm6 libxext6 -y
 RUN pip3 install -r requirements.txt
 
+# Expose the port that Flask is running on
+EXPOSE 5000
+
 # Set
 #CMD [ "python3", "-m" , "main.py", "--host=0.0.0.0"]
 CMD python3 app.py

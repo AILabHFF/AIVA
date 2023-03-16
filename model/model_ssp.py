@@ -1,9 +1,7 @@
 # %%
 import torchvision.models as models
 from torchvision.models import ResNet18_Weights
-
-
-
+import json
 import torch
 import torch.nn as nn
 #import torchvision.transforms as transforms
@@ -15,6 +13,7 @@ import time
 import copy
 import math
 #import pickle
+from visualprocessing.utils import resize_and_pad
 
 # %%
 # https://github.com/revidee/pytorch-pyramid-pooling/blob/master/pyramidpooling.py
@@ -251,6 +250,12 @@ class MeteorModel():
         self.model.eval()
         self.model = self.model.to(self.device)
 
+        with open('model/model_ssp.json') as json_file:
+            model_properties = json.load(json_file)
+        self.dim = (model_properties['height'], model_properties['width'])
+        self.class_labels = model_properties['class_labels']
+        self.class_labels = {v: k for k, v in self.class_labels.items()}
+
     def predict(self, x):
         x = x.to(self.device)
         with torch.no_grad():
@@ -266,13 +271,19 @@ class MeteorModel():
             _, preds = torch.max(output, 1)
 
         val = preds.item()
-        if val == 0:
-            return 'meteor'
-        else:
-            return 'not_meteor'
+        label = self.get_labels(val)
+        return label
         
     def reshape_input_image(self, image):
+        image = self.resize_image(image)
         image = torch.tensor(image).unsqueeze(0).float()
         image = image.permute(0, 3, 2, 1)
         return image
+    
+    def resize_image(self, image):
+        image = resize_and_pad(image, self.dim)
+        return image
+    
+    def get_labels(self, predicted_class):
+        return self.class_labels[predicted_class]
     

@@ -75,22 +75,9 @@ class VisualProcessor:
 
 
         if len(self.frame_buffer.sum_image_dict) > 0:
-            bboxes = self.frame_buffer.sum_image_dict.keys()
-            sum_image_list = list(self.frame_buffer.sum_image_dict.values())
-
-            labels = []
-            for img in sum_image_list:
-                labels.append(self.meteor_model.predict_label(img))
-            #print(labels)
-
-            # highlight bboxes in frame with meteor labels
-            for bbox, label in zip(bboxes, labels):
-                x, y, w, h = bbox
-                if label=='meteor':
-                    # add sum image to frame at bbox position
-                    #sum_image = frame_buffer.sum_image_dict[bbox]
-                    cv2.putText(frame, 'METEOR', (x,y+30), cv2.FONT_HERSHEY_PLAIN, 1, (0,255,255),2)
-                    cv2.rectangle(frame, (x+int(w/2)-30, y+int(h/2)-30), (x+int(w/2)+30, y+int(h/2)+30), (0,255,0), 10)
+            for boxid in self.frame_buffer.sum_image_dict:
+                cropped_sum_image = self.frame_buffer.sum_image_dict[boxid]['cropped_sum_image']
+                self.frame_buffer.sum_image_dict[boxid]['label'] = self.meteor_model.predict_label(cropped_sum_image)
 
         # Update framebuffer (delete old frames, save frames with objects)
         self.frame_buffer.update(buffer_min_size=2)

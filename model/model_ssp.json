@@ -2,5 +2,9 @@
     "model_shape": [1, "c", "w", "h"],
     "width": 96,
     "height": 54,
-    "c": 3
+    "c": 3,
+    "class_labels": {
+        "not_meteor": 1,
+        "meteor": 0
+    }
 }

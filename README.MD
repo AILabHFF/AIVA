@@ -1,4 +1,4 @@
-# MAD Midnight (Meteor Anomaly Detector) WebUI
+# MAD Midnight (Meteor Anomaly Detection) WebUI
 
 The MAD Midnight WebUI is a state-of-the-art web application that uses two powerful machine learning models to provide real-time detection and classification of anomalies. The app can accurately identify objects as either meteors or other events, making it a valuable tool for researchers, scientists, and anyone else who requires precise anomaly detection.
 
@@ -36,5 +36,5 @@ docker build -t madmidnight .
 ```
 ## Run the Docker container with the madmidnight image, including a volume, by running:
 ```
-docker run --gpus all -p 8888:8888 --rm madmidnight
+docker run --gpus all -p 5000:5000 --rm madmidnight
 ```
