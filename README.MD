@@ -42,3 +42,18 @@ docker run --gpus all -p 5000:5000 --rm madmidnight
 # Output
 As output we get both the individual images on which meteors appear and a summed image of all images of the same meteor which can be used for astrometry:
 ![](data/meteor_output.jpeg)
+
+# TODO's:
+- WebUI
+    - [x] Startup Page with detection Parameters
+    - [x] Upload Video
+    - [x] Video Stream
+    - [x] Show detected Meteors in Video Stream
+    - [ ] Progress Bar during the Video Stream
+    - [ ] End Application after the Video is finished
+- Backend
+    - [x] Trained and implemented single frame and sum frame object classifier 
+    - [ ] Pipline for the sum frame is still not as in original and therefore not as accurate
+    - [ ] Save Frames of Object as an uncompressed avi
+    - [ ] Save xml for each detected Object
+    - [ ] Calculate the time of object appearance
