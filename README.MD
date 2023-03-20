@@ -6,7 +6,11 @@ Notably, the app is highly accessible and can be used remotely from anywhere in 
 
 ![](data/WebUIAnimation.gif)
 
-# Installation
+----------------------
+
+<br/>
+
+## Installation
 → Install [Python3](https://www.python.org/downloads/release/python-3106/) (Version 3.8 - 3.10)
 
 → Download or use Git clone to download this project
@@ -26,8 +30,9 @@ double click the webui.bat
 If not, then **ctrl** & **left-click** on the link provided in your Terminal or simply copy and paste it into your Internet Browser.
 
 
+<br/>
 
-# Docker
+## Docker
 Alternatively, you can use [Docker](https://docs.docker.com/get-docker/) to build and run the MAD Midnight WebUI. Follow these steps:
 
 ### Build the Docker image with the tag "madmidnight" by running in your Terminal:
@@ -39,11 +44,20 @@ docker build -t madmidnight .
 docker run --gpus all -p 5000:5000 --rm madmidnight
 ```
 
-# Output
+----------------------
+
+<br/>
+
+## Output
 As output we get both the individual images on which meteors appear and a summed image of all images of the same meteor which can be used for astrometry:
 ![](data/meteor_output.jpeg)
 
-# TODO's:
+----------------------
+
+<br/>
+
+## TODO's:
+
 - WebUI
     - [x] Startup Page with detection Parameters
     - [x] Upload Video
@@ -53,7 +67,8 @@ As output we get both the individual images on which meteors appear and a summed
     - [ ] End Application after the Video is finished
 - Backend
     - [x] Trained and implemented single frame and sum frame object classifier 
-    - [ ] Pipline for the sum frame is still not as in original and therefore not as accurate
+    - [ ] Pipline for the sum frame is still not as in original and therefore not as accurate (get it from the full sum image)
     - [ ] Save Frames of Object as an uncompressed avi
     - [ ] Save xml for each detected Object
     - [ ] Calculate the time of object appearance
+    - [ ] Remove Video after processing
